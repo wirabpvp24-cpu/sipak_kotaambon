@@ -86,7 +86,7 @@ export default function App() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-xl tracking-tight hidden sm:block">SIPAK KOTA AMBON</span>
+            <span className="font-bold text-xl tracking-tight hidden sm:block">SI BASUDARA</span>
           </div>
           
           <div className="flex items-center gap-2">
@@ -210,7 +210,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="py-8 border-t border-slate-200 text-center text-slate-400 text-sm">
-        <p>&copy; {new Date().getFullYear()} SIPAK KOTA AMBON. Sistem Informasi Database Alumni PAK.</p>
+        <p>&copy; {new Date().getFullYear()} SI BASUDARA. Sistem Informasi Basis Data Alumni Terintegrasi Persekutuan Alumni Kristen Kota Ambon.</p>
       </footer>
     </div>
   );

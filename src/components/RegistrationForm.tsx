@@ -222,9 +222,9 @@ export default function RegistrationForm({
             <div className="mx-auto w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-200">
               <GraduationCap className="w-10 h-10 text-white" />
             </div>
-            <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">SIPAK KOTA AMBON</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">SI BASUDARA</CardTitle>
             <CardDescription className="text-slate-500 text-lg">
-              Pendaftaran Database Alumni PAK Kota Ambon
+              Sistem Informasi Basis Data Alumni Terintegrasi <br /> Persekutuan Alumni Kristen Kota Ambon
             </CardDescription>
           </CardHeader>
         )}
