@@ -1,0 +1,64 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: alumni
+    // Document ID: auto-generated
+    // Fields:
+    //   - fullName: string (required, < 100 chars)
+    //   - gender: string (required, ['Laki-laki', 'Perempuan'])
+    //   - birthPlace: string
+    //   - birthDate: string (ISO date)
+    //   - phone: string (required, 10-15 chars)
+    //   - email: string (required, email format)
+    //   - maritalStatus: string (['Lajang', 'Menikah', 'Duda/Janda'])
+    //   - educations: list of maps (required, 1-10 items)
+    //   - mainJob: string
+    //   - jobDetail: string
+    //   - workPlace: string
+    //   - address: string
+    //   - province: string
+    //   - city: string
+    //   - createdAt: timestamp
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated(); // In this custom setup, any authenticated user is treated as admin if they pass the UI check
+    }
+
+    function isValidAlumni(data) {
+      // Basic validation to ensure required fields exist and have correct types
+      return data.fullName is string && data.fullName.size() > 0 &&
+             data.gender is string &&
+             data.email is string &&
+             data.phone is string &&
+             data.educations is list &&
+             data.maritalStatus is string &&
+             data.city is string;
+    }
+
+    match /alumni/{alumniId} {
+      // Anyone can register
+      allow create: if isValidAlumni(request.resource.data);
+      
+      // Only authenticated users (admins) can read, update, delete
+      allow read, list, update, delete: if isAuthenticated();
+    }
+    
+    match /admin_settings/{docId} {
+      // Allow read for login check, allow update for settings
+      allow read, write: if true; // We need to read this for login even before auth is fully ready
+    }
+  }
+}

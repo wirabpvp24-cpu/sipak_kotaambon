@@ -1,0 +1,41 @@
+{
+  "entities": {
+    "Alumni": {
+      "title": "Alumni",
+      "description": "Data alumni PAK Kota Ambon",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string", "description": "Nama Lengkap" },
+        "gender": { "type": "string", "enum": ["Laki-laki", "Perempuan"] },
+        "birthPlace": { "type": "string" },
+        "birthDate": { "type": "string", "format": "date" },
+        "phone": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "maritalStatus": { "type": "string", "enum": ["Lajang", "Menikah", "Cerai"] },
+        "educations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "level": { "type": "string", "enum": ["DIII", "DIV", "S1", "S2", "S3"] },
+              "graduationYear": { "type": "number" },
+              "institution": { "type": "string" }
+            }
+          }
+        },
+        "lastJob": { "type": "string" },
+        "address": { "type": "string" },
+        "province": { "type": "string" },
+        "city": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fullName", "gender", "email", "phone", "educations"]
+    }
+  },
+  "firestore": {
+    "/alumni/{alumniId}": {
+      "schema": "Alumni",
+      "description": "Koleksi data alumni"
+    }
+  }
+}
