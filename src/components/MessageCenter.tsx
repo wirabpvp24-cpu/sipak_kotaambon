@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Send, MessageSquare, Cake, Megaphone, Search, Filter, Calendar, ExternalLink, CheckCircle2 } from 'lucide-react';
+import { Send, MessageSquare, Cake, Megaphone, Search, Filter, Calendar, ExternalLink, CheckCircle2, Mail } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,18 +10,20 @@ import { Alumni } from '@/types';
 import { dbService } from '@/lib/db';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
 export default function MessageCenter() {
   const [alumniList, setAlumniList] = useState<Alumni[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAlumniIds, setSelectedAlumniIds] = useState<string[]>([]);
-  const [messageType, setMessageType] = useState<'info' | 'birthday'>('info');
+  const [messageType, setMessageType] = useState<'info' | 'birthday' | 'email'>('info');
   const [messageContent, setMessageContent] = useState('');
 
   const templates = {
     info: "Halo [Nama], kami ingin menginformasikan bahwa akan ada kegiatan alumni PAK Kota Ambon pada tanggal [Tanggal]. Mohon kehadirannya ya!",
-    birthday: "Selamat Ulang Tahun, [Nama]! Semoga panjang umur, sehat selalu, dan diberkati dalam segala hal. Salam hangat dari pengurus alumni PAK Kota Ambon."
+    birthday: "Selamat Ulang Tahun, [Nama]! Semoga panjang umur, sehat selalu, dan diberkati dalam segala hal. Salam hangat dari pengurus alumni PAK Kota Ambon.",
+    email: "Yth. [Nama],\n\nKami dari pengurus alumni PAK Kota Ambon ingin menyampaikan informasi terkait...\n\nSalam,\nPengurus PAK Kota Ambon"
   };
 
   useEffect(() => {
@@ -73,16 +75,27 @@ export default function MessageCenter() {
 
   const handleSendMessage = (alumni: Alumni) => {
     const personalizedMessage = messageContent.replace('[Nama]', alumni.fullName);
-    // Format phone number for WhatsApp (remove non-digits, handle leading 0)
-    let phone = alumni.phone.replace(/\D/g, '');
-    if (phone.startsWith('0')) {
-      phone = '62' + phone.substring(1);
-    } else if (!phone.startsWith('62')) {
-      phone = '62' + phone;
-    }
     
-    const url = `https://wa.me/${phone}?text=${encodeURIComponent(personalizedMessage)}`;
-    window.open(url, '_blank');
+    if (messageType === 'email') {
+      const subject = encodeURIComponent("Informasi Alumni PAK Kota Ambon");
+      const body = encodeURIComponent(personalizedMessage);
+      // Using pakkotaambon@gmail.com as the sender is not possible via mailto 
+      // as mailto opens the user's local client. 
+      // We can only set the recipient, subject and body.
+      const url = `mailto:${alumni.email}?subject=${subject}&body=${body}`;
+      window.location.href = url;
+    } else {
+      // Format phone number for WhatsApp (remove non-digits, handle leading 0)
+      let phone = alumni.phone.replace(/\D/g, '');
+      if (phone.startsWith('0')) {
+        phone = '62' + phone.substring(1);
+      } else if (!phone.startsWith('62')) {
+        phone = '62' + phone;
+      }
+      
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(personalizedMessage)}`;
+      window.open(url, '_blank');
+    }
   };
 
   if (loading) return <div className="flex items-center justify-center h-64">Memuat Pusat Pesan...</div>;
@@ -118,12 +131,15 @@ export default function MessageCenter() {
           </CardHeader>
           <CardContent className="flex-1 flex flex-col min-h-0">
             <Tabs value={messageType} onValueChange={(v) => setMessageType(v as any)} className="w-full mb-4">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="info" className="gap-2">
-                  <Megaphone className="w-4 h-4" /> Info
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="info" className="gap-2 text-xs px-1">
+                  <Megaphone className="w-3 h-3" /> Info WA
                 </TabsTrigger>
-                <TabsTrigger value="birthday" className="gap-2">
-                  <Cake className="w-4 h-4" /> Ultah
+                <TabsTrigger value="birthday" className="gap-2 text-xs px-1">
+                  <Cake className="w-3 h-3" /> Ultah WA
+                </TabsTrigger>
+                <TabsTrigger value="email" className="gap-2 text-xs px-1">
+                  <Mail className="w-3 h-3" /> Email
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -144,43 +160,47 @@ export default function MessageCenter() {
               </span>
             </div>
 
-            <ScrollArea className="flex-1 border rounded-md p-2">
-              <div className="space-y-1">
-                {filteredAlumni.length > 0 ? (
-                  filteredAlumni.map(alumni => (
-                    <div 
-                      key={alumni.id} 
-                      className={`flex items-center gap-3 p-2 rounded-md transition-colors cursor-pointer hover:bg-slate-50 ${selectedAlumniIds.includes(alumni.id!) ? 'bg-blue-50/50' : ''}`}
-                      onClick={() => toggleSelectAlumni(alumni.id!)}
-                    >
-                      <Checkbox 
-                        checked={selectedAlumniIds.includes(alumni.id!)}
-                        onCheckedChange={() => toggleSelectAlumni(alumni.id!)}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-700 truncate">{alumni.fullName}</p>
-                        <div className="flex items-center gap-2">
-                          <p className="text-[10px] text-slate-400">{alumni.phone}</p>
-                          {isBirthdayToday(alumni.birthDate) && (
-                            <Badge variant="outline" className="text-[9px] h-4 px-1 bg-pink-50 text-pink-600 border-pink-100">Ultah Hari Ini!</Badge>
-                          )}
+            <div className="flex-1 min-h-0 border rounded-md overflow-hidden">
+              <ScrollArea className="h-full p-2">
+                <div className="space-y-1">
+                  {filteredAlumni.length > 0 ? (
+                    filteredAlumni.map(alumni => (
+                      <div 
+                        key={alumni.id} 
+                        className={`flex items-center gap-3 p-2 rounded-md transition-colors cursor-pointer hover:bg-slate-50 ${selectedAlumniIds.includes(alumni.id!) ? 'bg-blue-50/50' : ''}`}
+                        onClick={() => toggleSelectAlumni(alumni.id!)}
+                      >
+                        <Checkbox 
+                          checked={selectedAlumniIds.includes(alumni.id!)}
+                          onCheckedChange={() => toggleSelectAlumni(alumni.id!)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-700 truncate">{alumni.fullName}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-[10px] text-slate-400 truncate">
+                              {messageType === 'email' ? alumni.email : alumni.phone}
+                            </p>
+                            {isBirthdayToday(alumni.birthDate) && (
+                              <Badge variant="outline" className="text-[9px] h-4 px-1 bg-pink-50 text-pink-600 border-pink-100 shrink-0">Ultah Hari Ini!</Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-slate-400 text-sm">
+                      Tidak ada alumni ditemukan
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-slate-400 text-sm">
-                    Tidak ada alumni ditemukan
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
           </CardContent>
         </Card>
 
         {/* Right Column: Message Editor & Actions */}
         <Card className="lg:col-span-2 shadow-md border-slate-100 flex flex-col h-[700px]">
-          <CardHeader>
+          <CardHeader className="pb-2 shrink-0">
             <CardTitle className="text-lg flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-blue-600" />
               Editor Pesan
@@ -189,8 +209,10 @@ export default function MessageCenter() {
               Sesuaikan isi pesan Anda. Gunakan <code className="bg-slate-100 px-1 rounded text-blue-600">[Nama]</code> untuk menyebut nama alumni secara otomatis.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col gap-6">
-            <div className="space-y-2">
+          
+          <CardContent className="flex-1 flex flex-col gap-4 p-6 overflow-y-auto custom-scrollbar">
+            {/* Message Input - Fixed Height */}
+            <div className="space-y-2 flex flex-col shrink-0">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-slate-700">Isi Pesan</span>
                 <Button 
@@ -203,77 +225,87 @@ export default function MessageCenter() {
                 </Button>
               </div>
               <Textarea 
-                className="min-h-[200px] text-base leading-relaxed focus-visible:ring-blue-500"
+                className="h-[180px] resize-none text-base leading-relaxed focus-visible:ring-blue-500"
                 value={messageContent}
                 onChange={(e) => setMessageContent(e.target.value)}
                 placeholder="Tulis pesan Anda di sini..."
               />
             </div>
 
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-              <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+            {/* Preview - Fixed Height with Internal Scroll */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex flex-col h-[160px] shrink-0">
+              <h4 className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                 Pratinjau Pesan (Contoh)
               </h4>
-              <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm relative">
-                <div className="absolute -left-2 top-4 w-4 h-4 bg-white border-l border-b border-slate-200 rotate-45"></div>
-                <p className="text-sm text-slate-600 whitespace-pre-wrap italic">
-                  {messageContent.replace('[Nama]', filteredAlumni[0]?.fullName || 'Nama Alumni')}
-                </p>
+              <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm relative flex-1 overflow-hidden">
+                <div className="absolute -left-2 top-3 w-4 h-4 bg-white border-l border-b border-slate-200 rotate-45"></div>
+                <ScrollArea className="h-full">
+                  <p className="text-sm text-slate-600 whitespace-pre-wrap break-words italic pr-2">
+                    {messageContent.replace('[Nama]', filteredAlumni[0]?.fullName || 'Nama Alumni')}
+                  </p>
+                </ScrollArea>
               </div>
             </div>
 
-            <div className="mt-auto pt-6 border-t flex flex-col gap-4">
-              <div className="flex justify-between items-end">
-                <div className="flex-1">
+            {/* Footer / Actions - Pushed to bottom */}
+            <div className="mt-auto pt-4 border-t flex flex-col gap-4 shrink-0 pb-2">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                <div className="flex-1 min-w-0">
                   <p className="text-xs text-slate-400 mb-1">
-                    Pesan akan dikirimkan secara personal menggunakan tag <code className="text-blue-600 font-bold">[Nama]</code>.
+                    Pesan akan dikirimkan secara personal menggunakan tag <code className="text-blue-600 font-bold">[Nama]</code>. 
+                    {messageType === 'email' ? ' Menggunakan aplikasi email default Anda.' : ' Menggunakan WhatsApp Web/Desktop.'}
                   </p>
                   <p className="text-sm font-semibold text-slate-700">
                     Total {selectedAlumniIds.length} penerima terpilih.
                   </p>
                 </div>
                 <Button 
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 h-12 px-8 shadow-lg shadow-emerald-100"
+                  className={cn(
+                    "w-full sm:w-auto text-white gap-2 h-12 px-8 shadow-lg shrink-0",
+                    messageType === 'email' ? "bg-blue-600 hover:bg-blue-700 shadow-blue-100" : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100"
+                  )}
                   disabled={selectedAlumniIds.length === 0}
                   onClick={() => {
-                    // Open the first one immediately, then user can do others from the list
                     const firstId = selectedAlumniIds[0];
                     const alumni = alumniList.find(a => a.id === firstId);
                     if (alumni) handleSendMessage(alumni);
                     
                     if (selectedAlumniIds.length > 1) {
-                      alert(`Sistem akan membuka WhatsApp untuk ${alumni?.fullName}. Untuk penerima lainnya, silakan klik tombol kirim pada daftar antrean di bawah agar tidak diblokir oleh browser.`);
+                      const platform = messageType === 'email' ? 'Email' : 'WhatsApp';
+                      alert(`Sistem akan membuka ${platform} untuk ${alumni?.fullName}. Untuk penerima lainnya, silakan klik tombol kirim pada daftar antrean di bawah.`);
                     }
                   }}
                 >
                   <Send className="w-5 h-5" />
-                  Mulai Kirim Pesan
+                  Mulai Kirim {messageType === 'email' ? 'Email' : 'Pesan WA'}
                 </Button>
               </div>
 
               {selectedAlumniIds.length > 0 && (
                 <div className="bg-slate-50 rounded-lg border border-dashed border-slate-300 p-3">
                   <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-wider">Antrean Pengiriman ({selectedAlumniIds.length})</p>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedAlumniIds.map(id => {
-                      const alumni = alumniList.find(a => a.id === id);
-                      if (!alumni) return null;
-                      return (
-                        <Badge 
-                          key={id} 
-                          variant="secondary" 
-                          className="pl-2 pr-1 py-1 gap-2 bg-white border-slate-200 hover:bg-emerald-50 hover:border-emerald-200 transition-colors cursor-pointer group"
-                          onClick={() => handleSendMessage(alumni)}
-                        >
-                          <span className="text-xs text-slate-600">{alumni.fullName}</span>
-                          <div className="bg-emerald-500 text-white p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                            <ExternalLink className="w-3 h-3" />
-                          </div>
-                        </Badge>
-                      );
-                    })}
-                  </div>
+                  <ScrollArea className="h-32">
+                    <div className="flex flex-wrap gap-2 pb-4">
+                      {selectedAlumniIds.map(id => {
+                        const alumni = alumniList.find(a => a.id === id);
+                        if (!alumni) return null;
+                        return (
+                          <Badge 
+                            key={id} 
+                            variant="secondary" 
+                            className="pl-2 pr-1 py-1 gap-2 bg-white border-slate-200 hover:bg-emerald-50 hover:border-emerald-200 transition-colors cursor-pointer group"
+                            onClick={() => handleSendMessage(alumni)}
+                          >
+                            <span className="text-xs text-slate-600 truncate max-w-[150px]">{alumni.fullName}</span>
+                            <div className="bg-emerald-500 text-white p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                              <ExternalLink className="w-3 h-3" />
+                            </div>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
                 </div>
               )}
             </div>

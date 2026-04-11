@@ -96,8 +96,8 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-200 mb-4">
             <GraduationCap className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">SIPAK KOTA AMBON</h1>
-          <p className="text-slate-500">Sistem Informasi Database Alumni PAK</p>
+          <h1 className="text-2xl font-bold text-slate-900">SI GANDONG</h1>
+          <p className="text-slate-500">Sistem Informasi Basis Data Alumni Terintegrasi PAK Kota Ambon</p>
         </div>
 
         <Card className="border-none shadow-2xl overflow-hidden">

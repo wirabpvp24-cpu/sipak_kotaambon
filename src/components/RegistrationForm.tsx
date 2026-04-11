@@ -218,13 +218,13 @@ export default function RegistrationForm({
         isEdit && "shadow-none bg-transparent backdrop-blur-none p-0"
       )}>
         {!isEdit && (
-          <CardHeader className="text-center space-y-2">
-            <div className="mx-auto w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-blue-200">
-              <GraduationCap className="w-10 h-10 text-white" />
-            </div>
-            <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">SI BASUDARA</CardTitle>
-            <CardDescription className="text-slate-500 text-lg">
-              Sistem Informasi Basis Data Alumni Terintegrasi <br /> Persekutuan Alumni Kristen Kota Ambon
+          <CardHeader className="text-center space-y-4">
+            <CardTitle className="text-2xl font-bold tracking-tight text-slate-900 leading-snug">
+              Mari ambil bagian dalam pelayanan alumni Kristen di Kota Ambon dengan mengisi data alumni. Bersama, kita saling terhubung dan menjadi berkat.
+            </CardTitle>
+            <CardDescription className="text-slate-500 text-sm italic">
+              “Dan marilah kita saling memperhatikan supaya kita saling mendorong dalam kasih dan dalam pekerjaan baik. Janganlah kita menjauhkan diri dari pertemuan-pertemuan ibadah kita…” <br />
+              <span className="font-bold">Ibrani 10:24-25</span>
             </CardDescription>
           </CardHeader>
         )}
@@ -565,20 +565,61 @@ export default function RegistrationForm({
       </Card>
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <AlertDialogContent className="bg-white">
+        <AlertDialogContent className="bg-white max-w-2xl max-h-[90vh] overflow-y-auto">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl font-bold text-slate-900">Konfirmasi Data</AlertDialogTitle>
+            <AlertDialogTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-blue-600" />
+              Tinjau Data Anda
+            </AlertDialogTitle>
             <AlertDialogDescription className="text-slate-600">
-              Apakah Anda yakin data yang dimasukkan sudah benar? Pastikan Nama, Nomor HP, dan Email sudah sesuai sebelum menyimpan.
+              Silakan periksa kembali data Anda sebelum dikirim ke sistem.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="border-slate-200 text-slate-600">Periksa Kembali</AlertDialogCancel>
+          
+          <div className="py-4 space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div className="space-y-1">
+                <span className="text-slate-400 block">Nama Lengkap</span>
+                <span className="font-medium text-slate-900">{formData.fullName}</span>
+              </div>
+              <div className="space-y-1">
+                <span className="text-slate-400 block">Jenis Kelamin</span>
+                <span className="font-medium text-slate-900">{formData.gender}</span>
+              </div>
+              <div className="space-y-1">
+                <span className="text-slate-400 block">Kontak</span>
+                <span className="font-medium text-slate-900">{formData.phone} / {formData.email}</span>
+              </div>
+              <div className="space-y-1">
+                <span className="text-slate-400 block">Pekerjaan</span>
+                <span className="font-medium text-slate-900">{formData.mainJob} {formData.jobDetail ? `(${formData.jobDetail})` : ''}</span>
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <span className="text-slate-400 block">Alamat Domisili</span>
+                <span className="font-medium text-slate-900">{formData.address}, {formData.city}, {formData.province}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Riwayat Pendidikan</span>
+              <div className="space-y-2">
+                {formData.educations?.map((edu, idx) => (
+                  <div key={idx} className="flex justify-between items-center p-2 bg-slate-50 rounded border border-slate-100 text-sm">
+                    <span className="font-medium text-slate-700">{edu.level} - {edu.institution}</span>
+                    <span className="text-slate-500">Lulus {edu.graduationYear}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <AlertDialogFooter className="gap-2 pt-4 border-t">
+            <AlertDialogCancel className="border-slate-200 text-slate-600">Perbaiki Data</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleFinalSubmit}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
-              Ya, Simpan Data
+              Ya, Kirim Sekarang
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

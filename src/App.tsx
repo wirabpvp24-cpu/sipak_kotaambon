@@ -4,21 +4,28 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, UserPlus, GraduationCap, Users, LogOut, MessageSquare, Lock, Settings } from 'lucide-react';
+import { LayoutDashboard, UserPlus, GraduationCap, Users, LogOut, MessageSquare, Lock, Settings, Calendar } from 'lucide-react';
 import RegistrationForm from './components/RegistrationForm';
 import Dashboard from './components/Dashboard';
 import AlumniList from './components/AlumniList';
 import MessageCenter from './components/MessageCenter';
+import EventSchedule from './components/EventSchedule';
 import LoginPage from './components/LoginPage';
 import AdminSettings from './components/AdminSettings';
+import NotificationBell from './components/NotificationBell';
+import WelcomeModal from './components/WelcomeModal';
+import ContactModal from './components/ContactModal';
 import { Button } from './components/ui/button';
 import { auth, onAuthStateChanged, signOut } from './lib/firebase';
+import { Phone } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('register');
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [showContact, setShowContact] = useState(false);
 
   useEffect(() => {
     // Check local session
@@ -79,6 +86,37 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+      {showWelcome && !isAdmin && (
+        <WelcomeModal 
+          onSelectRegister={() => {
+            setActiveTab('register');
+            setShowWelcome(false);
+          }}
+          onSelectInfo={() => {
+            setActiveTab('schedule');
+            setShowWelcome(false);
+          }}
+          onSelectContact={() => {
+            setShowContact(true);
+            setShowWelcome(false);
+          }}
+        />
+      )}
+
+      <ContactModal 
+        isOpen={showContact} 
+        onClose={() => setShowContact(false)} 
+      />
+
+      {/* Header Marquee */}
+      <div className="py-3 bg-slate-900 overflow-hidden shrink-0">
+        <div className="animate-marquee">
+          <span className="text-white font-black tracking-[0.2em] text-sm uppercase px-4 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
+            SELAMAT DATANG DI SISTEM INFORMASI BASIS DATA ALUMNI TERINTEGRASI - PERSEKUTUAN ALUMNI KOTA AMBON PERKANTAS MALUKU
+          </span>
+        </div>
+      </div>
+
       {/* Navigation Bar */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -86,7 +124,7 @@ export default function App() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-xl tracking-tight hidden sm:block">SI BASUDARA</span>
+            <span className="font-bold text-xl tracking-tight hidden sm:block">SI GANDONG</span>
           </div>
           
           <div className="flex items-center gap-2">
@@ -99,6 +137,26 @@ export default function App() {
             >
               <UserPlus className="w-4 h-4" />
               <span className="hidden sm:inline">Pendaftaran</span>
+            </Button>
+
+            <Button 
+              variant={activeTab === 'schedule' ? 'default' : 'ghost'} 
+              size="sm"
+              onClick={() => setActiveTab('schedule')}
+              className="gap-2"
+            >
+              <Calendar className="w-4 h-4" />
+              <span className="hidden sm:inline">Info Kegiatan</span>
+            </Button>
+
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setShowContact(true)}
+              className="gap-2"
+            >
+              <Phone className="w-4 h-4" />
+              <span className="hidden sm:inline">Kontak</span>
             </Button>
 
             {/* Admin Only Tabs */}
@@ -135,14 +193,16 @@ export default function App() {
                   variant={activeTab === 'settings' ? 'default' : 'ghost'} 
                   size="sm"
                   onClick={() => setActiveTab('settings')}
-                  className="gap-2"
+                  className="w-9 p-0"
+                  title="Pengaturan"
                 >
                   <Settings className="w-4 h-4" />
-                  <span className="hidden sm:inline">Pengaturan</span>
                 </Button>
                 
                 <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
                 
+                <NotificationBell />
+
                 <Button 
                   variant="ghost" 
                   size="sm"
@@ -158,10 +218,10 @@ export default function App() {
                 variant="outline" 
                 size="sm"
                 onClick={() => setShowLogin(true)}
-                className="gap-2 border-slate-200 text-slate-600"
+                className="w-9 p-0 border-slate-200 text-slate-600"
+                title="Admin Login"
               >
                 <Lock className="w-4 h-4" />
-                <span className="hidden sm:inline">Admin Login</span>
               </Button>
             )}
           </div>
@@ -177,9 +237,13 @@ export default function App() {
             }} />
           </div>
         )}
+
+        {activeTab === 'schedule' && (
+          <EventSchedule isAdmin={isAdmin} />
+        )}
         
         {/* Protected Admin Content */}
-        {isAdmin ? (
+        {isAdmin && (
           <>
             {activeTab === 'list' && (
               <AlumniList />
@@ -194,23 +258,23 @@ export default function App() {
               <AdminSettings />
             )}
           </>
-        ) : (
-          activeTab !== 'register' && (
-            <div className="flex flex-col items-center justify-center py-20 space-y-4">
-              <Lock className="w-12 h-12 text-slate-300" />
-              <div className="text-center">
-                <h3 className="text-xl font-bold text-slate-900">Akses Terbatas</h3>
-                <p className="text-slate-500">Silakan login sebagai admin untuk mengakses halaman ini.</p>
-              </div>
-              <Button onClick={() => setShowLogin(true)}>Admin Login</Button>
+        )}
+
+        {!isAdmin && activeTab !== 'register' && activeTab !== 'schedule' && (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <Lock className="w-12 h-12 text-slate-300" />
+            <div className="text-center">
+              <h3 className="text-xl font-bold text-slate-900">Akses Terbatas</h3>
+              <p className="text-slate-500">Silakan login sebagai admin untuk mengakses halaman ini.</p>
             </div>
-          )
+            <Button onClick={() => setShowLogin(true)}>Admin Login</Button>
+          </div>
         )}
       </main>
 
       {/* Footer */}
       <footer className="py-8 border-t border-slate-200 text-center text-slate-400 text-sm">
-        <p>&copy; {new Date().getFullYear()} SI BASUDARA. Sistem Informasi Basis Data Alumni Terintegrasi Persekutuan Alumni Kristen Kota Ambon.</p>
+        <p>&copy; {new Date().getFullYear()} SI GANDONG. Sistem Informasi Basis Data Alumni Terintegrasi Persekutuan Alumni Kristen Kota Ambon.</p>
       </footer>
     </div>
   );

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { Users, GraduationCap, Award, UserCheck, PieChart as PieChartIcon, BarChart as BarChartIcon, Briefcase } from 'lucide-react';
+import { Users, GraduationCap, Award, UserCheck, PieChart as PieChartIcon, BarChart as BarChartIcon, Briefcase, Bell, Cake } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alumni, getAlumniCategory } from '@/types';
 import { dbService } from '@/lib/db';
 import { 

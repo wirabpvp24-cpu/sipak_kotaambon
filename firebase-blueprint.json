@@ -30,12 +30,32 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["fullName", "gender", "email", "phone", "educations"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "Jadwal kegiatan alumni",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Judul Kegiatan" },
+        "description": { "type": "string", "description": "Keterangan" },
+        "date": { "type": "string", "format": "date", "description": "Tanggal Kegiatan" },
+        "time": { "type": "string", "description": "Jam Kegiatan" },
+        "location": { "type": "string", "description": "Lokasi" },
+        "imageUrl": { "type": "string", "description": "URL Gambar Flyer Kegiatan" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "date", "time", "location"]
     }
   },
   "firestore": {
     "/alumni/{alumniId}": {
       "schema": "Alumni",
       "description": "Koleksi data alumni"
+    },
+    "/events/{eventId}": {
+      "schema": "Event",
+      "description": "Koleksi jadwal kegiatan"
     }
   }
 }

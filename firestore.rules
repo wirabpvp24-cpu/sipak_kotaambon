@@ -48,12 +48,25 @@ service cloud.firestore {
              data.city is string;
     }
 
+    function isValidEvent(data) {
+      return data.title is string && data.title.size() > 0 &&
+             data.date is string &&
+             data.time is string &&
+             data.location is string;
+    }
+
     match /alumni/{alumniId} {
       // Anyone can register
       allow create: if isValidAlumni(request.resource.data);
       
       // Only authenticated users (admins) can read, update, delete
       allow read, list, update, delete: if isAuthenticated();
+    }
+
+    match /events/{eventId} {
+      // Anyone can read and list events, but only authenticated users can manage them
+      allow read, list: if true;
+      allow write: if isAuthenticated() && (request.method == 'DELETE' || isValidEvent(request.resource.data));
     }
     
     match /admin_settings/{docId} {

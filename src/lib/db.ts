@@ -1,4 +1,4 @@
-import { Alumni } from '../types';
+import { Alumni, Event } from '../types';
 import { db, auth } from './firebase';
 import { 
   collection, 
@@ -66,8 +66,10 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 }
 
 const COLLECTION_NAME = 'alumni';
+const EVENTS_COLLECTION = 'events';
 
 export const dbService = {
+  // Alumni methods...
   async getAlumni(): Promise<Alumni[]> {
     try {
       const q = query(collection(db, COLLECTION_NAME), orderBy('createdAt', 'desc'));
@@ -135,6 +137,77 @@ export const dbService = {
       callback(alumni);
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, COLLECTION_NAME);
+    });
+  },
+
+  // Event methods
+  async getEvents(): Promise<Event[]> {
+    try {
+      const q = query(collection(db, EVENTS_COLLECTION), orderBy('date', 'asc'));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt,
+          updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate().toISOString() : data.updatedAt,
+        } as unknown as Event;
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.LIST, EVENTS_COLLECTION);
+      return [];
+    }
+  },
+
+  async addEvent(event: Omit<Event, 'id'>): Promise<void> {
+    try {
+      await addDoc(collection(db, EVENTS_COLLECTION), {
+        ...event,
+        createdAt: serverTimestamp(),
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, EVENTS_COLLECTION);
+    }
+  },
+
+  async updateEvent(event: Event): Promise<void> {
+    if (!event.id) return;
+    try {
+      const eventRef = doc(db, EVENTS_COLLECTION, event.id);
+      const { id, ...data } = event;
+      await updateDoc(eventRef, {
+        ...data,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `${EVENTS_COLLECTION}/${event.id}`);
+    }
+  },
+
+  async deleteEvent(id: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, EVENTS_COLLECTION, id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `${EVENTS_COLLECTION}/${id}`);
+    }
+  },
+
+  subscribeEvents(callback: (events: Event[]) => void) {
+    const q = query(collection(db, EVENTS_COLLECTION), orderBy('date', 'asc'));
+    return onSnapshot(q, (snapshot) => {
+      const events = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt,
+          updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate().toISOString() : data.updatedAt,
+        } as unknown as Event;
+      });
+      callback(events);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, EVENTS_COLLECTION);
     });
   }
 };

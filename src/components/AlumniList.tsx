@@ -23,8 +23,8 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alumni, getAlumniCategory, AlumniCategory } from '@/types';
 import { dbService } from '@/lib/db';
 
@@ -287,109 +287,111 @@ export default function AlumniList() {
       </div>
 
       <Card className="border-none shadow-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader className="bg-slate-50">
-              <TableRow>
-                <TableHead className="w-[200px]">Nama Lengkap</TableHead>
-                <TableHead>Kategori</TableHead>
-                <TableHead>TTL</TableHead>
-                <TableHead>Pendidikan Terakhir</TableHead>
-                <TableHead>Pekerjaan</TableHead>
-                <TableHead>Kontak</TableHead>
-                <TableHead>Domisili</TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAlumni.length > 0 ? (
-                filteredAlumni.map((alumni) => {
-                  const firstGrad = Math.min(...alumni.educations.map(e => e.graduationYear));
-                  const category = getAlumniCategory(firstGrad);
-                  const lastEdu = [...alumni.educations].sort((a, b) => b.graduationYear - a.graduationYear)[0];
-                  
-                  return (
-                    <TableRow key={alumni.id} className="hover:bg-slate-50/50 transition-colors">
-                      <TableCell className="font-medium">
-                        <div className="flex flex-col">
-                          <span>{alumni.fullName}</span>
-                          <span className="text-xs text-slate-400 font-normal">{alumni.gender}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant="outline"
-                          className={cn(
-                            "font-medium border-transparent",
-                            category === 'Senior' ? "bg-orange-100 text-orange-700" : 
-                            category === 'Madya' ? "bg-emerald-100 text-emerald-700" : 
-                            "bg-blue-100 text-blue-700"
-                          )}
-                        >
-                          {category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        <div className="flex flex-col">
-                          <span>{alumni.birthPlace}</span>
-                          <span className="text-xs text-slate-500">
-                            {new Date(alumni.birthDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col text-sm">
-                          <span className="font-semibold text-blue-600">{lastEdu?.level} ({lastEdu?.graduationYear})</span>
-                          <span className="text-xs text-slate-500 truncate max-w-[150px]">{lastEdu?.institution}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col text-sm">
-                          <span className="font-medium text-slate-700">{alumni.mainJob}</span>
-                          <span className="text-xs text-slate-500 truncate max-w-[150px]">{alumni.workPlace || '-'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col text-xs gap-1">
-                          <div className="flex items-center gap-1 text-slate-600">
-                            <Mail className="w-3 h-3" /> {alumni.email}
-                          </div>
-                          <div className="flex items-center gap-1 text-slate-600">
-                            <Phone className="w-3 h-3" /> {alumni.phone}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-sm text-slate-600">
-                          <MapPin className="w-3 h-3 text-slate-400" />
-                          <span>{alumni.city}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50" 
-                            onClick={() => setSelectedAlumni(alumni)}
-                          >
-                            <Eye className="w-4 h-4" /> Detil
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              ) : (
+        <ScrollArea className="h-[650px]">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-slate-50 sticky top-0 z-10 shadow-sm">
                 <TableRow>
-                  <TableCell colSpan={8} className="h-32 text-center text-slate-500">
-                    Tidak ada data alumni ditemukan.
-                  </TableCell>
+                  <TableHead className="w-[200px] bg-slate-50">Nama Lengkap</TableHead>
+                  <TableHead className="bg-slate-50">Kategori</TableHead>
+                  <TableHead className="bg-slate-50">TTL</TableHead>
+                  <TableHead className="bg-slate-50">Pendidikan Terakhir</TableHead>
+                  <TableHead className="bg-slate-50">Pekerjaan</TableHead>
+                  <TableHead className="bg-slate-50">Kontak</TableHead>
+                  <TableHead className="bg-slate-50">Domisili</TableHead>
+                  <TableHead className="text-right bg-slate-50 pr-8">Aksi</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {filteredAlumni.length > 0 ? (
+                  filteredAlumni.map((alumni) => {
+                    const firstGrad = Math.min(...alumni.educations.map(e => e.graduationYear));
+                    const category = getAlumniCategory(firstGrad);
+                    const lastEdu = [...alumni.educations].sort((a, b) => b.graduationYear - a.graduationYear)[0];
+                    
+                    return (
+                      <TableRow key={alumni.id} className="hover:bg-slate-50/50 transition-colors">
+                        <TableCell className="font-medium">
+                          <div className="flex flex-col">
+                            <span>{alumni.fullName}</span>
+                            <span className="text-xs text-slate-400 font-normal">{alumni.gender}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant="outline"
+                            className={cn(
+                              "font-medium border-transparent",
+                              category === 'Senior' ? "bg-orange-100 text-orange-700" : 
+                              category === 'Madya' ? "bg-emerald-100 text-emerald-700" : 
+                              "bg-blue-100 text-blue-700"
+                            )}
+                          >
+                            {category}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          <div className="flex flex-col">
+                            <span>{alumni.birthPlace}</span>
+                            <span className="text-xs text-slate-500">
+                              {new Date(alumni.birthDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col text-sm">
+                            <span className="font-semibold text-blue-600">{lastEdu?.level} ({lastEdu?.graduationYear})</span>
+                            <span className="text-xs text-slate-500 truncate max-w-[150px]">{lastEdu?.institution}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col text-sm">
+                            <span className="font-medium text-slate-700">{alumni.mainJob}</span>
+                            <span className="text-xs text-slate-500 truncate max-w-[150px]">{alumni.workPlace || '-'}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col text-xs gap-1">
+                            <div className="flex items-center gap-1 text-slate-600">
+                              <Mail className="w-3 h-3" /> {alumni.email}
+                            </div>
+                            <div className="flex items-center gap-1 text-slate-600">
+                              <Phone className="w-3 h-3" /> {alumni.phone}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-sm text-slate-600">
+                            <MapPin className="w-3 h-3 text-slate-400" />
+                            <span>{alumni.city}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right pr-8">
+                          <div className="flex justify-end">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50" 
+                              onClick={() => setSelectedAlumni(alumni)}
+                            >
+                              <Eye className="w-4 h-4" /> Detil
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-32 text-center text-slate-500">
+                      Tidak ada data alumni ditemukan.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </ScrollArea>
       </Card>
 
       {/* Detail Dialog - Outside the loop */}

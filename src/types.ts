@@ -29,6 +29,18 @@ export interface Alumni {
   createdAt: string;
 }
 
+export interface Event {
+  id?: string;
+  title: string;
+  description?: string;
+  date: string; // ISO date string
+  time: string; // HH:mm format
+  location: string;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export type AlumniCategory = 'Junior' | 'Madya' | 'Senior';
 
 export function getAlumniCategory(firstGraduationYear: number): AlumniCategory {
