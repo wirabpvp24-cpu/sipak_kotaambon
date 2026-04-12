@@ -4,15 +4,18 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Alert, AlertDescription } from './ui/alert';
-import { Loader2, Save, User, Lock, CheckCircle2 } from 'lucide-react';
+import { Loader2, Save, User, Lock, CheckCircle2, RefreshCw, Database, AlertCircle } from 'lucide-react';
 import { db, doc, getDoc, updateDoc } from '@/lib/firebase';
+import { dbService } from '@/lib/db';
 
 export default function AdminSettings() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [syncMessage, setSyncMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -53,6 +56,23 @@ export default function AdminSettings() {
       setMessage({ type: 'error', text: 'Gagal menyimpan perubahan.' });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    setSyncMessage({ type: '', text: '' });
+    try {
+      const result = await dbService.syncDatabase();
+      setSyncMessage({
+        type: 'success',
+        text: `Sinkronisasi berhasil! ${result.updated} data diperbarui dari total ${result.total} data.`
+      });
+    } catch (err) {
+      console.error("Sync error:", err);
+      setSyncMessage({ type: 'error', text: 'Gagal melakukan sinkronisasi database.' });
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -141,27 +161,47 @@ export default function AdminSettings() {
           </form>
         </CardContent>
       </Card>
+
+      <Card className="border-none shadow-lg border-t-4 border-t-amber-500">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Database className="w-5 h-5 text-amber-500" />
+            <CardTitle className="text-lg">Sinkronisasi Database</CardTitle>
+          </div>
+          <CardDescription>
+            Gunakan fitur ini untuk memastikan semua data alumni lama memiliki Kode Unik yang sesuai dengan format terbaru.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {syncMessage.text && (
+            <Alert className={syncMessage.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}>
+              {syncMessage.type === 'success' ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+              <AlertDescription>{syncMessage.text}</AlertDescription>
+            </Alert>
+          )}
+          
+          <div className="bg-amber-50 p-4 rounded-xl border border-amber-100">
+            <p className="text-sm text-amber-800 leading-relaxed">
+              Fitur ini akan memindai seluruh database alumni dan menggenerate Kode Unik bagi data yang belum memilikinya. 
+              Proses ini aman dan tidak akan mengubah data pribadi alumni.
+            </p>
+          </div>
+
+          <Button 
+            onClick={handleSync}
+            disabled={isSyncing}
+            variant="outline"
+            className="w-full border-amber-200 text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+          >
+            {isSyncing ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            {isSyncing ? 'Sedang Sinkronisasi...' : 'Mulai Sinkronisasi Database'}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
-}
-
-function AlertCircle(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <line x1="12" y1="8" x2="12" y2="12" />
-      <line x1="12" y1="16" x2="12.01" y2="16" />
-    </svg>
-  )
 }

@@ -1,11 +1,12 @@
 export type Gender = 'Laki-laki' | 'Perempuan';
 export type MaritalStatus = 'Lajang' | 'Menikah' | 'Duda/Janda';
-export type EducationLevel = 'DIII' | 'DIV' | 'S1' | 'S2' | 'S3';
+export type EducationLevel = |'SMA/SMK'|'DIII' | 'DIV' | 'S1' | 'S2' | 'S3';
 
 export interface Education {
   level: EducationLevel;
   graduationYear: number;
   institution: string;
+  major: string;
 }
 
 export type MainJob = 'Pegawai Swasta' | 'Wiraswasta' | 'Tenaga Medis' | 'Pendidik' | 'TNI/Polri' | 'PNS' | 'BUMN/BUMD' | 'Pensiunan' | 'Lainnya';
@@ -26,18 +27,42 @@ export interface Alumni {
   address: string;
   province: string;
   city: string;
+  // Interests & Potential
+  skills: string[];
+  otherSkill?: string;
+  isWillingToServe: boolean;
+  serviceInterests: string[];
+  otherServiceInterest?: string;
+  uniqueCode?: string;
   createdAt: string;
 }
 
 export interface Event {
   id?: string;
   title: string;
+  theme?: string;
+  speaker?: string;
   description?: string;
   date: string; // ISO date string
   time: string; // HH:mm format
+  timezone: 'WIB' | 'WITA' | 'WIT';
   location: string;
   imageUrl?: string;
   createdAt: string;
+  updatedAt?: string;
+}
+
+export interface OrgProfile {
+  content: string;
+  vision?: string;
+  mission?: string;
+  updatedAt?: string;
+}
+
+export interface HomeSettings {
+  heroTitle: string;
+  heroSubtitle: string;
+  welcomeText: string;
   updatedAt?: string;
 }
 

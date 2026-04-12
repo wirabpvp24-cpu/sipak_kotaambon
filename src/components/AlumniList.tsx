@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { Search, User, Mail, Phone, GraduationCap, MapPin, Eye, Calendar, Briefcase, Heart, Globe, Filter, Edit, Trash2, Users, ArrowUpDown, Download } from 'lucide-react';
+import { Search, User, Mail, Phone, GraduationCap, MapPin, Eye, Calendar, Briefcase, Heart, Globe, Filter, Edit, Trash2, Users, ArrowUpDown, Download, Plus, Lock, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -58,7 +58,7 @@ function DetailItem({ label, value, icon }: { label: string, value: string, icon
   );
 }
 
-type SortOrder = 'newest' | 'oldest' | 'birth-youngest' | 'birth-oldest';
+type SortOrder = 'newest' | 'oldest' | 'birth-youngest' | 'birth-oldest' | 'name-asc' | 'name-desc';
 
 export default function AlumniList() {
   const [alumniList, setAlumniList] = useState<Alumni[]>([]);
@@ -66,10 +66,11 @@ export default function AlumniList() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [cityFilter, setCityFilter] = useState<string>('all');
   const [monthFilter, setMonthFilter] = useState<string>('all');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('name-asc');
   const [loading, setLoading] = useState(true);
   const [selectedAlumni, setSelectedAlumni] = useState<Alumni | null>(null);
   const [editingAlumni, setEditingAlumni] = useState<Alumni | null>(null);
+  const [isAddingAlumni, setIsAddingAlumni] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -99,6 +100,11 @@ export default function AlumniList() {
       'Alamat',
       'Kota',
       'Provinsi',
+      'Bidang Keahlian',
+      'Keahlian Lainnya',
+      'Bersedia Melayani',
+      'Minat Pelayanan',
+      'Minat Pelayanan Lainnya',
       'Pendidikan Terakhir',
       'Tahun Lulus',
       'Institusi',
@@ -122,10 +128,15 @@ export default function AlumniList() {
         `"${alumni.address.replace(/"/g, '""')}"`,
         `"${alumni.city}"`,
         `"${alumni.province}"`,
+        `"${(alumni.skills || []).join(', ')}"`,
+        `"${alumni.otherSkill || ''}"`,
+        `"${alumni.isWillingToServe ? 'Ya' : 'Tidak'}"`,
+        `"${(alumni.serviceInterests || []).join(', ')}"`,
+        `"${alumni.otherServiceInterest || ''}"`,
         `"${lastEdu?.level || ''}"`,
         `"${lastEdu?.graduationYear || ''}"`,
         `"${lastEdu?.institution || ''}"`,
-        `"${alumni.createdAt ? new Date(alumni.createdAt).toLocaleString('id-ID') : ''}"`
+        `"${alumni.createdAt ? new Date(alumni.createdAt).toLocaleString('id-ID', { hour12: false }) : ''}"`
       ];
     });
 
@@ -162,6 +173,9 @@ export default function AlumniList() {
 
     return matchesSearch && matchesCategory && matchesCity && matchesMonth;
   }).sort((a, b) => {
+    if (sortOrder === 'name-asc') return a.fullName.localeCompare(b.fullName);
+    if (sortOrder === 'name-desc') return b.fullName.localeCompare(a.fullName);
+    
     if (sortOrder === 'birth-youngest' || sortOrder === 'birth-oldest') {
       const yearA = new Date(a.birthDate).getFullYear();
       const yearB = new Date(b.birthDate).getFullYear();
@@ -184,13 +198,23 @@ export default function AlumniList() {
           <h1 className="text-3xl font-bold text-slate-900">Data Alumni</h1>
           <p className="text-slate-500">Daftar seluruh alumni PAK Kota Ambon yang terdaftar</p>
         </div>
-        <Button 
-          onClick={exportToCSV}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shadow-lg shadow-emerald-100"
-        >
-          <Download className="w-4 h-4" />
-          Ekspor ke Excel (CSV)
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setIsAddingAlumni(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-lg shadow-blue-100"
+          >
+            <Plus className="w-4 h-4" />
+            Tambah Alumni
+          </Button>
+          <Button 
+            onClick={exportToCSV}
+            variant="outline"
+            className="border-emerald-600 text-emerald-600 hover:bg-emerald-50 gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Ekspor ke Excel (CSV)
+          </Button>
+        </div>
       </div>
 
       {/* Filters Section */}
@@ -264,6 +288,8 @@ export default function AlumniList() {
               </div>
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="name-asc">Nama (A-Z)</SelectItem>
+              <SelectItem value="name-desc">Nama (Z-A)</SelectItem>
               <SelectItem value="newest">Pendaftaran Terbaru</SelectItem>
               <SelectItem value="oldest">Pendaftaran Terlama</SelectItem>
               <SelectItem value="birth-youngest">Usia Termuda</SelectItem>
@@ -292,7 +318,8 @@ export default function AlumniList() {
             <Table>
               <TableHeader className="bg-slate-50 sticky top-0 z-10 shadow-sm">
                 <TableRow>
-                  <TableHead className="w-[200px] bg-slate-50">Nama Lengkap</TableHead>
+                  <TableHead className="w-[50px] bg-slate-50">No.</TableHead>
+                  <TableHead className="w-[180px] bg-slate-50">Nama Lengkap</TableHead>
                   <TableHead className="bg-slate-50">Kategori</TableHead>
                   <TableHead className="bg-slate-50">TTL</TableHead>
                   <TableHead className="bg-slate-50">Pendidikan Terakhir</TableHead>
@@ -304,16 +331,19 @@ export default function AlumniList() {
               </TableHeader>
               <TableBody>
                 {filteredAlumni.length > 0 ? (
-                  filteredAlumni.map((alumni) => {
+                  filteredAlumni.map((alumni, index) => {
                     const firstGrad = Math.min(...alumni.educations.map(e => e.graduationYear));
                     const category = getAlumniCategory(firstGrad);
                     const lastEdu = [...alumni.educations].sort((a, b) => b.graduationYear - a.graduationYear)[0];
                     
                     return (
                       <TableRow key={alumni.id} className="hover:bg-slate-50/50 transition-colors">
+                        <TableCell className="text-slate-400 font-mono text-xs">
+                          {index + 1}
+                        </TableCell>
                         <TableCell className="font-medium">
                           <div className="flex flex-col">
-                            <span>{alumni.fullName}</span>
+                            <span className="truncate max-w-[150px]">{alumni.fullName}</span>
                             <span className="text-xs text-slate-400 font-normal">{alumni.gender}</span>
                           </div>
                         </TableCell>
@@ -492,7 +522,12 @@ export default function AlumniList() {
                         <User className="w-10 h-10 text-white" />
                       </div>
                       <div className="space-y-1">
-                        <h3 className="text-2xl font-bold text-slate-900">{selectedAlumni.fullName}</h3>
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-2xl font-bold text-slate-900">{selectedAlumni.fullName}</h3>
+                          <code className="text-sm font-mono font-bold bg-blue-600 text-white px-3 py-1 rounded-lg">
+                            {selectedAlumni.uniqueCode}
+                          </code>
+                        </div>
                         <div className="flex flex-wrap gap-2">
                           <Badge variant="outline" className="bg-white/50 border-blue-200 text-blue-700">
                             {selectedAlumni.gender}
@@ -527,6 +562,7 @@ export default function AlumniList() {
                         Informasi Pribadi
                       </h4>
                       <div className="grid grid-cols-1 gap-4">
+                        <DetailItem label="Kode Unik Alumni" value={selectedAlumni.uniqueCode || '-'} icon={<Lock className="w-4 h-4" />} />
                         <DetailItem label="Tempat, Tanggal Lahir" value={`${selectedAlumni.birthPlace}, ${new Date(selectedAlumni.birthDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`} icon={<Calendar className="w-4 h-4" />} />
                         <DetailItem label="Status Pernikahan" value={selectedAlumni.maritalStatus} icon={<Users className="w-4 h-4" />} />
                         <DetailItem label="Pekerjaan Utama" value={selectedAlumni.mainJob} icon={<Briefcase className="w-4 h-4" />} />
@@ -552,6 +588,56 @@ export default function AlumniList() {
                         <DetailItem label="Kota/Provinsi" value={`${selectedAlumni.city}, ${selectedAlumni.province}`} icon={<Globe className="w-4 h-4" />} />
                       </div>
                     </div>
+
+                    {/* Minat & Potensi */}
+                    <div className="space-y-4 md:col-span-2">
+                      <h4 className="text-lg font-bold text-slate-900 flex items-center gap-2 border-b pb-2">
+                        <Sparkles className="w-5 h-5 text-amber-500" />
+                        Minat & Potensi
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                          <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Bidang Keahlian</p>
+                          <div className="flex flex-wrap gap-2">
+                            {(selectedAlumni.skills || []).map(skill => (
+                              <Badge key={skill} variant="secondary" className="bg-amber-50 text-amber-700 border-amber-100">
+                                {skill}
+                              </Badge>
+                            ))}
+                            {selectedAlumni.otherSkill && (
+                              <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-100">
+                                {selectedAlumni.otherSkill}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Kesediaan Melayani</p>
+                          <div className="flex items-center gap-2">
+                            <Badge className={selectedAlumni.isWillingToServe ? "bg-emerald-600" : "bg-slate-400"}>
+                              {selectedAlumni.isWillingToServe ? "Ya, Bersedia" : "Tidak Bersedia"}
+                            </Badge>
+                          </div>
+                          {selectedAlumni.isWillingToServe && (
+                            <div className="mt-3 space-y-2">
+                              <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Minat Pelayanan</p>
+                              <div className="flex flex-wrap gap-2">
+                                {(selectedAlumni.serviceInterests || []).map(service => (
+                                  <Badge key={service} variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-100">
+                                    {service}
+                                  </Badge>
+                                ))}
+                                {selectedAlumni.otherServiceInterest && (
+                                  <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-100">
+                                    {selectedAlumni.otherServiceInterest}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Riwayat Pendidikan */}
@@ -572,7 +658,10 @@ export default function AlumniList() {
                               <p className="font-bold text-slate-900">{edu.graduationYear}</p>
                             </div>
                           </div>
-                          <p className="text-sm font-medium text-slate-700 line-clamp-2">{edu.institution}</p>
+                          <div className="space-y-1">
+                            <p className="text-sm font-bold text-blue-700">{edu.major}</p>
+                            <p className="text-xs font-medium text-slate-500 line-clamp-2">{edu.institution}</p>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -610,6 +699,35 @@ export default function AlumniList() {
                     setEditingAlumni(null);
                   }}
                   onCancel={() => setEditingAlumni(null)}
+                />
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Alumni Dialog */}
+      <Dialog open={isAddingAlumni} onOpenChange={setIsAddingAlumni}>
+        <DialogContent className="sm:max-w-[900px] w-[95vw] max-h-[90vh] flex flex-col p-0 overflow-hidden border-none shadow-2xl">
+          <DialogHeader className="p-6 border-b bg-white sticky top-0 z-10">
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2 text-slate-900">
+              <Plus className="w-6 h-6 text-blue-600" />
+              Tambah Alumni Baru
+            </DialogTitle>
+            <DialogDescription className="text-slate-500">
+              Masukkan data alumni baru secara manual. Kode unik akan digenerate otomatis.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <div className="p-6">
+              {isAddingAlumni && (
+                <RegistrationForm 
+                  mode="admin"
+                  onComplete={() => {
+                    setIsAddingAlumni(false);
+                  }}
+                  onCancel={() => setIsAddingAlumni(false)}
                 />
               )}
             </div>

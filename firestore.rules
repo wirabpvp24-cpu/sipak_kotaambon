@@ -17,7 +17,7 @@ service cloud.firestore {
     //   - phone: string (required, 10-15 chars)
     //   - email: string (required, email format)
     //   - maritalStatus: string (['Lajang', 'Menikah', 'Duda/Janda'])
-    //   - educations: list of maps (required, 1-10 items)
+    //   - educations: list of maps (required, 1-10 items, fields: level, graduationYear, institution, major)
     //   - mainJob: string
     //   - jobDetail: string
     //   - workPlace: string
@@ -28,50 +28,70 @@ service cloud.firestore {
     //
     // ===============================================================
 
+    // ===============================================================
     // Helper Functions
+    // ===============================================================
     function isAuthenticated() {
       return request.auth != null;
     }
 
     function isAdmin() {
-      return isAuthenticated(); // In this custom setup, any authenticated user is treated as admin if they pass the UI check
+      return isAuthenticated() && (
+        (request.auth.token.get('email', '') == "wirabpvp24@gmail.com" && request.auth.token.get('email_verified', false) == true) ||
+        get(/databases/$(database)/documents/admin_settings/auth).data.get('username', null) != null
+      );
     }
 
     function isValidAlumni(data) {
-      // Basic validation to ensure required fields exist and have correct types
-      return data.fullName is string && data.fullName.size() > 0 &&
-             data.gender is string &&
-             data.email is string &&
-             data.phone is string &&
-             data.educations is list &&
-             data.maritalStatus is string &&
-             data.city is string;
+      return data.get('fullName', '') is string && data.get('fullName', '').size() > 0 && data.get('fullName', '').size() < 200 &&
+             data.get('gender', '') is string && data.get('gender', '') in ['Laki-laki', 'Perempuan'] &&
+             data.get('email', '') is string && data.get('email', '').matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") &&
+             data.get('phone', '') is string && data.get('phone', '').size() >= 10 && data.get('phone', '').size() <= 20 &&
+             data.get('educations', []) is list && data.get('educations', []).size() > 0 &&
+             data.get('maritalStatus', '') is string &&
+             data.get('city', '') is string && data.get('city', '').size() > 0 &&
+             data.get('skills', []) is list && data.get('skills', []).size() > 0 &&
+             data.get('isWillingToServe', false) is bool &&
+             data.get('serviceInterests', []) is list &&
+             (!('uniqueCode' in data) || (data.uniqueCode is string && data.uniqueCode.size() < 50));
     }
 
     function isValidEvent(data) {
-      return data.title is string && data.title.size() > 0 &&
-             data.date is string &&
-             data.time is string &&
-             data.location is string;
+      return data.get('title', '') is string && data.get('title', '').size() > 0 && data.get('title', '').size() < 200 &&
+             data.get('date', '') is string &&
+             data.get('time', '') is string &&
+             data.get('timezone', '') is string && data.get('timezone', '') in ['WIB', 'WITA', 'WIT'] &&
+             data.get('location', '') is string;
     }
 
     match /alumni/{alumniId} {
-      // Anyone can register
-      allow create: if isValidAlumni(request.resource.data);
-      
-      // Only authenticated users (admins) can read, update, delete
-      allow read, list, update, delete: if isAuthenticated();
+      // Allow read for authenticated users so they can find their own record via uniqueCode
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidAlumni(request.resource.data);
+      allow update: if (isAdmin() || isAuthenticated()) && isValidAlumni(request.resource.data);
+      allow delete: if isAdmin();
     }
 
     match /events/{eventId} {
-      // Anyone can read and list events, but only authenticated users can manage them
-      allow read, list: if true;
-      allow write: if isAuthenticated() && (request.method == 'DELETE' || isValidEvent(request.resource.data));
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidEvent(request.resource.data);
+      allow delete: if isAdmin();
     }
     
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /admin_settings/{docId} {
-      // Allow read for login check, allow update for settings
-      allow read, write: if true; // We need to read this for login even before auth is fully ready
+      // Only allow authenticated users to read (needed for login check)
+      allow read: if isAuthenticated();
+      // Only the primary admin can update admin settings
+      allow write: if isAuthenticated() && request.auth.token.get('email', '') == "wirabpvp24@gmail.com";
+    }
+
+    match /_connection_test_/{docId} {
+      allow read: if true;
     }
   }
 }

@@ -19,7 +19,8 @@
             "properties": {
               "level": { "type": "string", "enum": ["DIII", "DIV", "S1", "S2", "S3"] },
               "graduationYear": { "type": "number" },
-              "institution": { "type": "string" }
+              "institution": { "type": "string" },
+              "major": { "type": "string", "description": "Program Studi" }
             }
           }
         },
@@ -27,9 +28,14 @@
         "address": { "type": "string" },
         "province": { "type": "string" },
         "city": { "type": "string" },
+        "skills": { "type": "array", "items": { "type": "string" } },
+        "otherSkill": { "type": "string" },
+        "isWillingToServe": { "type": "boolean" },
+        "serviceInterests": { "type": "array", "items": { "type": "string" } },
+        "otherServiceInterest": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["fullName", "gender", "email", "phone", "educations"]
+      "required": ["fullName", "gender", "email", "phone", "educations", "skills"]
     },
     "Event": {
       "title": "Event",
@@ -37,15 +43,40 @@
       "type": "object",
       "properties": {
         "title": { "type": "string", "description": "Judul Kegiatan" },
+        "theme": { "type": "string", "description": "Tema Kegiatan" },
+        "speaker": { "type": "string", "description": "Nama Pembicara" },
         "description": { "type": "string", "description": "Keterangan" },
         "date": { "type": "string", "format": "date", "description": "Tanggal Kegiatan" },
-        "time": { "type": "string", "description": "Jam Kegiatan" },
+        "time": { "type": "string", "description": "Jam Kegiatan (Format 24 Jam, misal: 14:30)" },
+        "timezone": { "type": "string", "enum": ["WIB", "WITA", "WIT"], "description": "Wilayah Waktu" },
         "location": { "type": "string", "description": "Lokasi" },
         "imageUrl": { "type": "string", "description": "URL Gambar Flyer Kegiatan" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["title", "date", "time", "location"]
+    },
+    "Profile": {
+      "title": "Profile",
+      "description": "Informasi profil organisasi",
+      "type": "object",
+      "properties": {
+        "content": { "type": "string", "description": "Konten profil (Markdown)" },
+        "vision": { "type": "string", "description": "Visi" },
+        "mission": { "type": "string", "description": "Misi" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "HomeSettings": {
+      "title": "Home Settings",
+      "description": "Pengaturan konten halaman beranda",
+      "type": "object",
+      "properties": {
+        "heroTitle": { "type": "string" },
+        "heroSubtitle": { "type": "string" },
+        "welcomeText": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "firestore": {
@@ -56,6 +87,14 @@
     "/events/{eventId}": {
       "schema": "Event",
       "description": "Koleksi jadwal kegiatan"
+    },
+    "/settings/profile": {
+      "schema": "Profile",
+      "description": "Informasi profil organisasi"
+    },
+    "/settings/home": {
+      "schema": "HomeSettings",
+      "description": "Konten halaman beranda"
     }
   }
 }

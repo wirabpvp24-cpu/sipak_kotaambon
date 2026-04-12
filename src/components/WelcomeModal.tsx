@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, UserPlus, Info, Instagram, X, Calendar, ArrowRight, ExternalLink, MapPin, Facebook, Phone } from 'lucide-react';
+import { GraduationCap, UserPlus, Info, Instagram, X, Calendar, ArrowRight, ExternalLink, MapPin, Facebook, Phone, History, LayoutDashboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
@@ -10,10 +10,11 @@ import { Event } from '@/types';
 interface WelcomeModalProps {
   onSelectRegister: () => void;
   onSelectInfo: () => void;
+  onSelectProfile: () => void;
   onSelectContact: () => void;
 }
 
-export default function WelcomeModal({ onSelectRegister, onSelectInfo, onSelectContact }: WelcomeModalProps) {
+export default function WelcomeModal({ onSelectRegister, onSelectInfo, onSelectProfile, onSelectContact }: WelcomeModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [nextEvent, setNextEvent] = useState<Event | null>(null);
 
@@ -63,7 +64,7 @@ export default function WelcomeModal({ onSelectRegister, onSelectInfo, onSelectC
               <div>
                 <h2 className="text-3xl font-black tracking-tight mb-2">SI GANDONG</h2>
                 <p className="text-blue-100 text-sm leading-relaxed">
-                  Sistem Informasi Basis Data Alumni Terintegrasi Persekutuan Alumni Kristen Kota Ambon
+                  Sistem Informasi Pengelolaan Data dan Pelayanan Alumni Terintegrasi Persekutuan Alumni Kristen Kota Ambon, Perkantas Maluku
                 </p>
               </div>
               <div className="pt-4">
@@ -81,20 +82,20 @@ export default function WelcomeModal({ onSelectRegister, onSelectInfo, onSelectC
               </div>
 
               <div className="space-y-4">
-                {/* Option 1: Registration */}
+                {/* Option 1: Profile */}
                 <button 
                   onClick={() => {
-                    onSelectRegister();
+                    onSelectProfile();
                     setIsOpen(false);
                   }}
                   className="w-full group flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-100 hover:border-blue-600 hover:bg-blue-50/50 transition-all text-left"
                 >
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-600 transition-colors">
-                    <UserPlus className="w-6 h-6 text-blue-600 group-hover:text-white" />
+                  <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                    <History className="w-6 h-6 text-blue-600 group-hover:text-white" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-bold text-slate-900 group-hover:text-blue-700">Pendaftaran Alumni</h4>
-                    <p className="text-xs text-slate-500">Daftarkan diri Anda dalam database alumni</p>
+                    <h4 className="font-bold text-slate-900 group-hover:text-blue-700">Profil Organisasi</h4>
+                    <p className="text-xs text-slate-500">Mengenal sejarah, visi, dan misi kami</p>
                   </div>
                   <ArrowRight className="w-5 h-5 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
                 </button>
@@ -117,7 +118,25 @@ export default function WelcomeModal({ onSelectRegister, onSelectInfo, onSelectC
                   <ArrowRight className="w-5 h-5 text-slate-300 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />
                 </button>
 
-                {/* Option 3: Contact */}
+                {/* Option 3: Registration */}
+                <button 
+                  onClick={() => {
+                    onSelectRegister();
+                    setIsOpen(false);
+                  }}
+                  className="w-full group flex items-center gap-4 p-4 rounded-2xl border-2 border-slate-100 hover:border-blue-600 hover:bg-blue-50/50 transition-all text-left"
+                >
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+                    <UserPlus className="w-6 h-6 text-blue-600 group-hover:text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-slate-900 group-hover:text-blue-700">Pendaftaran Alumni</h4>
+                    <p className="text-xs text-slate-500">Daftarkan diri Anda dalam database alumni</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                </button>
+
+                {/* Option 4: Contact */}
                 <button 
                   onClick={() => {
                     onSelectContact();

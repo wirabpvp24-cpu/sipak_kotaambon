@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, UserPlus, GraduationCap, Users, LogOut, MessageSquare, Lock, Settings, Calendar } from 'lucide-react';
+import { LayoutDashboard, UserPlus, GraduationCap, Users, LogOut, MessageSquare, Lock, Settings, Calendar, History } from 'lucide-react';
 import RegistrationForm from './components/RegistrationForm';
 import Dashboard from './components/Dashboard';
 import AlumniList from './components/AlumniList';
@@ -15,8 +15,10 @@ import AdminSettings from './components/AdminSettings';
 import NotificationBell from './components/NotificationBell';
 import WelcomeModal from './components/WelcomeModal';
 import ContactModal from './components/ContactModal';
+import Profile from './components/Profile';
+import Home from './components/Home';
 import { Button } from './components/ui/button';
-import { auth, onAuthStateChanged, signOut } from './lib/firebase';
+import { auth, onAuthStateChanged, signOut, signInAnonymously } from './lib/firebase';
 import { Phone } from 'lucide-react';
 
 export default function App() {
@@ -32,11 +34,25 @@ export default function App() {
     const session = localStorage.getItem('sipak_admin_session');
     if (session === 'active') {
       setIsAdmin(true);
+      // Ensure we are signed in to Firebase for Firestore access
+      if (!auth.currentUser) {
+        signInAnonymously(auth).catch(err => console.error("Auto-login failed:", err));
+      }
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      // We keep Firebase auth for Firestore access, but isAdmin is our custom logic
-      setIsAuthReady(true);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (!currentUser) {
+        try {
+          await signInAnonymously(auth);
+          // The listener will fire again once signed in
+          return;
+        } catch (err) {
+          console.error("Anonymous sign-in failed:", err);
+          setIsAuthReady(true); // Set ready anyway so we don't hang, but with error
+        }
+      } else {
+        setIsAuthReady(true);
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -73,7 +89,7 @@ export default function App() {
           className="absolute top-4 left-4 z-50"
           onClick={() => setShowLogin(false)}
         >
-          &larr; Kembali ke Pendaftaran
+          &larr; Kembali
         </Button>
         <LoginPage onLogin={() => {
           setIsAdmin(true);
@@ -96,6 +112,10 @@ export default function App() {
             setActiveTab('schedule');
             setShowWelcome(false);
           }}
+          onSelectProfile={() => {
+            setActiveTab('profile');
+            setShowWelcome(false);
+          }}
           onSelectContact={() => {
             setShowContact(true);
             setShowWelcome(false);
@@ -112,7 +132,7 @@ export default function App() {
       <div className="py-3 bg-slate-900 overflow-hidden shrink-0">
         <div className="animate-marquee">
           <span className="text-white font-black tracking-[0.2em] text-sm uppercase px-4 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
-            SELAMAT DATANG DI SISTEM INFORMASI BASIS DATA ALUMNI TERINTEGRASI - PERSEKUTUAN ALUMNI KOTA AMBON PERKANTAS MALUKU
+            Selamat Datang di Persekutuan Alumni Kristen Kota Ambon, Perkantas Maluku
           </span>
         </div>
       </div>
@@ -128,15 +148,15 @@ export default function App() {
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Public Tab */}
+            {/* Public Tabs */}
             <Button 
-              variant={activeTab === 'register' ? 'default' : 'ghost'} 
+              variant={activeTab === 'profile' ? 'default' : 'ghost'} 
               size="sm"
-              onClick={() => setActiveTab('register')}
+              onClick={() => setActiveTab('profile')}
               className="gap-2"
             >
-              <UserPlus className="w-4 h-4" />
-              <span className="hidden sm:inline">Pendaftaran</span>
+              <History className="w-4 h-4" />
+              <span className="hidden sm:inline">Profil</span>
             </Button>
 
             <Button 
@@ -149,15 +169,29 @@ export default function App() {
               <span className="hidden sm:inline">Info Kegiatan</span>
             </Button>
 
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => setShowContact(true)}
-              className="gap-2"
-            >
-              <Phone className="w-4 h-4" />
-              <span className="hidden sm:inline">Kontak</span>
-            </Button>
+            {!isAdmin && (
+              <Button 
+                variant={activeTab === 'register' ? 'default' : 'ghost'} 
+                size="sm"
+                onClick={() => setActiveTab('register')}
+                className="gap-2"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span className="hidden sm:inline">Pendaftaran</span>
+              </Button>
+            )}
+
+            {!isAdmin && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowContact(true)}
+                className="gap-2"
+              >
+                <Phone className="w-4 h-4" />
+                <span className="hidden sm:inline">Kontak</span>
+              </Button>
+            )}
 
             {/* Admin Only Tabs */}
             {isAdmin ? (
@@ -238,6 +272,10 @@ export default function App() {
           </div>
         )}
 
+        {activeTab === 'profile' && (
+          <Profile isAdmin={isAdmin} />
+        )}
+
         {activeTab === 'schedule' && (
           <EventSchedule isAdmin={isAdmin} />
         )}
@@ -260,7 +298,7 @@ export default function App() {
           </>
         )}
 
-        {!isAdmin && activeTab !== 'register' && activeTab !== 'schedule' && (
+        {!isAdmin && activeTab !== 'register' && activeTab !== 'schedule' && activeTab !== 'profile' && (
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
             <Lock className="w-12 h-12 text-slate-300" />
             <div className="text-center">
@@ -274,7 +312,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="py-8 border-t border-slate-200 text-center text-slate-400 text-sm">
-        <p>&copy; {new Date().getFullYear()} SI GANDONG. Sistem Informasi Basis Data Alumni Terintegrasi Persekutuan Alumni Kristen Kota Ambon.</p>
+        <p>&copy; {new Date().getFullYear()} SI GANDONG. Sistem Informasi Pengelolaan Data dan Pelayanan Alumni Terintegrasi Persekutuan Alumni Kristen Kota Ambon, Perkantas Maluku.</p>
       </footer>
     </div>
   );
