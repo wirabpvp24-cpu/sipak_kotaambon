@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { Users, GraduationCap, Award, UserCheck, PieChart as PieChartIcon, BarChart as BarChartIcon, Briefcase, Bell, Cake, MapPin, Sparkles, Heart } from 'lucide-react';
+import { Users, GraduationCap, Award, UserCheck, UserPlus, PieChart as PieChartIcon, BarChart as BarChartIcon, Briefcase, Bell, Cake, MapPin, Sparkles, Heart } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alumni, getAlumniCategory } from '@/types';
 import { dbService } from '@/lib/db';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
@@ -136,6 +140,19 @@ export default function Dashboard() {
     { name: 'Tidak Bersedia', value: totalAlumni - willingToServeCount }
   ];
 
+  const inKTBCount = alumniList.filter(a => a.isInKTB).length;
+  const inKTBData = [
+    { name: 'Sudah ber-KTB', value: inKTBCount },
+    { name: 'Belum ber-KTB', value: totalAlumni - inKTBCount }
+  ];
+
+  const willingToJoinKTBCount = alumniList.filter(a => !a.isInKTB && a.isWillingToJoinKTB).length;
+  const notInKTBCount = totalAlumni - inKTBCount;
+  const willingToJoinKTBData = [
+    { name: 'Bersedia Gabung', value: willingToJoinKTBCount },
+    { name: 'Tidak Bersedia', value: notInKTBCount - willingToJoinKTBCount }
+  ];
+
   const majorData = Object.entries(majorStats)
     .map(([name, value]) => ({ name, value: value as number }))
     .sort((a, b) => b.value - a.value)
@@ -159,6 +176,122 @@ export default function Dashboard() {
     );
   };
 
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    const dateStr = new Date().toLocaleDateString('id-ID', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    });
+
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(15, 23, 42);
+    doc.text('Laporan Statistik Alumni', 14, 22);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(100, 116, 139);
+    doc.text('Persekutuan Alumni Kristen Kota Ambon, Perkantas Maluku', 14, 30);
+    doc.text(`Tanggal Laporan: ${dateStr}`, 14, 37);
+
+    // 1. Summary Section
+    doc.setFontSize(16);
+    doc.setTextColor(15, 23, 42);
+    doc.text('1. Ringkasan Umum', 14, 50);
+
+    autoTable(doc, {
+      startY: 55,
+      head: [['Kategori Statistik', 'Jumlah']],
+      body: [
+        ['Total Alumni Terdaftar', totalAlumni.toString()],
+        ['Alumni Junior (< 5 thn)', (categoryStats['Junior'] || 0).toString()],
+        ['Alumni Madya (5-15 thn)', (categoryStats['Madya'] || 0).toString()],
+        ['Alumni Senior (> 15 thn)', (categoryStats['Senior'] || 0).toString()],
+        ['Bersedia Melayani', willingToServeCount.toString()],
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: [59, 130, 246] },
+    });
+
+    // 2. Demographics
+    doc.setFontSize(16);
+    doc.text('2. Demografi & Pendidikan', 14, (doc as any).lastAutoTable.finalY + 15);
+
+    const genderRows = genderData.map(d => [d.name, d.value.toString(), `${((d.value / totalAlumni) * 100).toFixed(1)}%`]);
+    const eduRows = educationData.map(d => [d.name, d.value.toString(), `${((d.value / totalAlumni) * 100).toFixed(1)}%`]);
+
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 20,
+      head: [['Jenis Kelamin', 'Jumlah', 'Persentase']],
+      body: genderRows,
+      theme: 'plain',
+      headStyles: { fillColor: [15, 23, 42] },
+    });
+
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 10,
+      head: [['Jenjang Pendidikan', 'Jumlah', 'Persentase']],
+      body: eduRows,
+      theme: 'plain',
+      headStyles: { fillColor: [15, 23, 42] },
+    });
+
+    // 3. Majors & Skills (New Page if needed)
+    doc.addPage();
+    doc.setFontSize(16);
+    doc.text('3. Program Studi & Keahlian', 14, 22);
+
+    doc.setFontSize(12);
+    doc.text(`Top 10 Program Studi (Jenjang ${majorLevelFilter})`, 14, 32);
+    autoTable(doc, {
+      startY: 35,
+      head: [['Program Studi', 'Jumlah Alumni']],
+      body: majorData.map(d => [d.name, d.value.toString()]),
+      theme: 'striped',
+      headStyles: { fillColor: [59, 130, 246] },
+    });
+
+    doc.setFontSize(12);
+    doc.text('Top 10 Bidang Keahlian', 14, (doc as any).lastAutoTable.finalY + 15);
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 20,
+      head: [['Bidang Keahlian', 'Jumlah Alumni']],
+      body: skillData.map(d => [d.name, d.value.toString()]),
+      theme: 'striped',
+      headStyles: { fillColor: [245, 158, 11] }, // amber-500
+    });
+
+    // 4. Service Interests
+    doc.setFontSize(16);
+    doc.text('4. Minat Pelayanan', 14, (doc as any).lastAutoTable.finalY + 15);
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 20,
+      head: [['Bidang Pelayanan', 'Jumlah Peminat']],
+      body: serviceData.map(d => [d.name, d.value.toString()]),
+      theme: 'striped',
+      headStyles: { fillColor: [16, 185, 129] }, // emerald-500
+    });
+
+    // 5. KTB Information
+    doc.addPage();
+    doc.setFontSize(16);
+    doc.text('5. Informasi KTB (Kelompok Tumbuh Bersama)', 14, 22);
+
+    autoTable(doc, {
+      startY: 30,
+      head: [['Status KTB', 'Jumlah']],
+      body: [
+        ['Sudah ber-KTB', inKTBCount.toString()],
+        ['Belum ber-KTB', (totalAlumni - inKTBCount).toString()],
+        ['Bersedia Bergabung KTB (Bagi yang belum)', willingToJoinKTBCount.toString()],
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: [59, 130, 246] },
+    });
+
+    doc.save(`laporan_statistik_alumni_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   return (
     <div className="space-y-8 p-4 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -166,9 +299,19 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold text-slate-900">Dashboard Alumni</h1>
           <p className="text-slate-500">Ringkasan informasi alumni PAK Kota Ambon</p>
         </div>
-        <div className="bg-blue-50 px-4 py-2 rounded-full flex items-center gap-2 border border-blue-100">
-          <Users className="w-5 h-5 text-blue-600" />
-          <span className="font-bold text-blue-700">{totalAlumni} Total Alumni</span>
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={exportToPDF}
+            variant="outline"
+            className="border-red-600 text-red-600 hover:bg-red-50 gap-2 shadow-sm"
+          >
+            <Download className="w-4 h-4" />
+            Download Laporan PDF
+          </Button>
+          <div className="bg-blue-50 px-4 py-2 rounded-full flex items-center gap-2 border border-blue-100">
+            <Users className="w-5 h-5 text-blue-600" />
+            <span className="font-bold text-blue-700">{totalAlumni} Total Alumni</span>
+          </div>
         </div>
       </div>
 
@@ -547,6 +690,72 @@ export default function Dashboard() {
                 />
                 <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} barSize={20} />
               </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* KTB Status */}
+        <Card className="shadow-md border-slate-100">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">Status KTB</CardTitle>
+              <CardDescription>Alumni yang sudah & belum ber-KTB</CardDescription>
+            </div>
+            <Users className="w-5 h-5 text-slate-400" />
+          </CardHeader>
+          <CardContent className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={inKTBData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={5}
+                  dataKey="value"
+                  labelLine={false}
+                  label={renderCustomizedLabel}
+                >
+                  <Cell fill="#3b82f6" />
+                  <Cell fill="#94a3b8" />
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Willingness to Join KTB */}
+        <Card className="shadow-md border-slate-100">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">Kesediaan Bergabung KTB</CardTitle>
+              <CardDescription>Bagi alumni yang belum ber-KTB</CardDescription>
+            </div>
+            <UserPlus className="w-5 h-5 text-slate-400" />
+          </CardHeader>
+          <CardContent className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={willingToJoinKTBData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={5}
+                  dataKey="value"
+                  labelLine={false}
+                  label={renderCustomizedLabel}
+                >
+                  <Cell fill="#10b981" />
+                  <Cell fill="#ef4444" />
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>

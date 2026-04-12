@@ -79,6 +79,10 @@ export default function RegistrationForm({
       }) : [];
       
       return {
+        isInKTB: false,
+        ktbName: '',
+        ktbLeader: '',
+        isWillingToJoinKTB: false,
         ...initialData,
         educations: sortedEducations
       };
@@ -103,6 +107,10 @@ export default function RegistrationForm({
       isWillingToServe: false,
       serviceInterests: [],
       otherServiceInterest: '',
+      isInKTB: false,
+      ktbName: '',
+      ktbLeader: '',
+      isWillingToJoinKTB: false,
     };
   });
 
@@ -140,6 +148,10 @@ export default function RegistrationForm({
     isWillingToServe: false,
     serviceInterests: [],
     otherServiceInterest: '',
+    isInKTB: false,
+    ktbName: '',
+    ktbLeader: '',
+    isWillingToJoinKTB: false,
   };
 
   const handleReset = () => {
@@ -203,9 +215,15 @@ export default function RegistrationForm({
     
     // Validation check
     const requiredFields = ['fullName', 'birthPlace', 'birthDate', 'phone', 'email', 'address', 'province', 'city', 'mainJob'];
+    
+    const ktbValid = formData.isInKTB 
+      ? (!!formData.ktbName && !!formData.ktbLeader)
+      : (formData.isWillingToJoinKTB !== undefined && formData.isWillingToJoinKTB !== null);
+
     const hasEmptyFields = requiredFields.some(field => !formData[field as keyof Alumni]) || 
                           formData.educations?.some(edu => !edu.institution || !edu.major) ||
-                          (formData.skills?.length === 0);
+                          (formData.skills?.length === 0) ||
+                          !ktbValid;
 
     if (hasEmptyFields) {
       setShowError(true);
@@ -221,11 +239,18 @@ export default function RegistrationForm({
     setShowConfirmDialog(false);
     setIsSubmitting(true);
     setSubmitError(null);
+
+    // Clean up undefined values for Firestore
+    const cleanedData = { ...formData };
+    Object.keys(cleanedData).forEach(key => {
+      if (cleanedData[key as keyof Alumni] === undefined) {
+        delete cleanedData[key as keyof Alumni];
+      }
+    });
+
     try {
       if (isEdit || flowState === 'update') {
-        await dbService.updateAlumni({
-          ...formData,
-        } as Alumni);
+        await dbService.updateAlumni(cleanedData as Alumni);
         if (isEdit) onComplete();
         else {
           setIsSuccess(true);
@@ -243,7 +268,7 @@ export default function RegistrationForm({
           return;
         }
 
-        const code = await dbService.addAlumni(formData as Alumni);
+        const code = await dbService.addAlumni(cleanedData as Alumni);
         setGeneratedCode(code);
         setIsSuccess(true);
         setFormData(emptyForm);
@@ -484,7 +509,7 @@ export default function RegistrationForm({
             <Label htmlFor="jobDetail">Detail Pekerjaan (Opsional)</Label>
             <Input 
               id="jobDetail" 
-              value={formData.jobDetail} 
+              value={formData.jobDetail || ''} 
               onChange={e => setFormData({...formData, jobDetail: e.target.value})}
               placeholder="Mis. Guru Matematika, Manager IT, dsb"
             />
@@ -493,7 +518,7 @@ export default function RegistrationForm({
             <Label htmlFor="workPlace">Tempat Bekerja (Opsional)</Label>
             <Input 
               id="workPlace" 
-              value={formData.workPlace} 
+              value={formData.workPlace || ''} 
               onChange={e => setFormData({...formData, workPlace: e.target.value})}
               placeholder="Nama Perusahaan / Instansi"
             />
@@ -581,7 +606,7 @@ export default function RegistrationForm({
               <div className="mt-2 animate-in fade-in slide-in-from-top-2">
                 <Input 
                   placeholder="Sebutkan keahlian lainnya (mis. Pariwisata, Transportasi, dsb)" 
-                  value={formData.otherSkill}
+                  value={formData.otherSkill || ''}
                   onChange={e => setFormData({ ...formData, otherSkill: e.target.value })}
                   className="max-w-md"
                 />
@@ -642,12 +667,88 @@ export default function RegistrationForm({
                   <div className="mt-2">
                     <Input 
                       placeholder="Sebutkan bidang pelayanan lainnya" 
-                      value={formData.otherServiceInterest}
+                      value={formData.otherServiceInterest || ''}
                       onChange={e => setFormData({ ...formData, otherServiceInterest: e.target.value })}
                       className="max-w-md"
                     />
                   </div>
                 )}
+              </motion.div>
+            )}
+          </div>
+
+          {/* KTB Section */}
+          <div className="space-y-4 p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+            <div className="space-y-2">
+              <Label className="text-base">Apakah anda sudah ber-KTB (Kelompok Tumbuh Bersama)? <RequiredAsterisk /></Label>
+              <RadioGroup 
+                value={formData.isInKTB ? "Ya" : "Tidak"} 
+                onValueChange={(val) => setFormData({ 
+                  ...formData, 
+                  isInKTB: val === "Ya",
+                  ktbName: val === "Tidak" ? '' : (formData.ktbName || ''),
+                  ktbLeader: val === "Tidak" ? '' : (formData.ktbLeader || ''),
+                  isWillingToJoinKTB: val === "Ya" ? false : (formData.isWillingToJoinKTB ?? false)
+                })}
+                className="flex gap-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Ya" id="ktb-yes" />
+                  <Label htmlFor="ktb-yes">Ya</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="Tidak" id="ktb-no" />
+                  <Label htmlFor="ktb-no">Tidak</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {formData.isInKTB ? (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-blue-200"
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="ktbName">Nama KTB <RequiredAsterisk /></Label>
+                  <Input 
+                    id="ktbName" 
+                    value={formData.ktbName || ''} 
+                    onChange={e => setFormData({ ...formData, ktbName: e.target.value })}
+                    placeholder="mis. KTB SYALOM"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ktbLeader">Pemimpin KTB <RequiredAsterisk /></Label>
+                  <Input 
+                    id="ktbLeader" 
+                    value={formData.ktbLeader || ''} 
+                    onChange={e => setFormData({ ...formData, ktbLeader: e.target.value })}
+                    placeholder="mis. Semy Salaka, S.T."
+                  />
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="space-y-2 pt-2 border-t border-blue-200"
+              >
+                <Label className="text-sm font-semibold">Apakah anda bersedia bergabung di dalam KTB? <RequiredAsterisk /></Label>
+                <RadioGroup 
+                  value={formData.isWillingToJoinKTB === true ? "Ya" : formData.isWillingToJoinKTB === false ? "Tidak" : ""} 
+                  onValueChange={(val) => setFormData({ ...formData, isWillingToJoinKTB: val === "Ya" })}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Ya" id="join-ktb-yes" />
+                    <Label htmlFor="join-ktb-yes">Ya</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Tidak" id="join-ktb-no" />
+                    <Label htmlFor="join-ktb-no">Tidak</Label>
+                  </div>
+                </RadioGroup>
               </motion.div>
             )}
           </div>
@@ -919,6 +1020,15 @@ export default function RegistrationForm({
                 <span className="text-slate-400 block">Kesediaan Melayani</span>
                 <span className="font-medium text-slate-900">
                   {formData.isWillingToServe ? `Ya (${formData.serviceInterests?.join(', ')}${formData.otherServiceInterest ? `, ${formData.otherServiceInterest}` : ''})` : 'Tidak'}
+                </span>
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <span className="text-slate-400 block">Status KTB (Kelompok Tumbuh Bersama)</span>
+                <span className="font-medium text-slate-900">
+                  {formData.isInKTB 
+                    ? `Sudah Ber-KTB (Nama: ${formData.ktbName}, Pemimpin: ${formData.ktbLeader})` 
+                    : `Belum Ber-KTB (${formData.isWillingToJoinKTB ? 'Bersedia Bergabung' : 'Belum Bersedia Bergabung'})`
+                  }
                 </span>
               </div>
             </div>

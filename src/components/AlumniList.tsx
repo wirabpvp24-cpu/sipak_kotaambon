@@ -27,6 +27,8 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alumni, getAlumniCategory, AlumniCategory } from '@/types';
 import { dbService } from '@/lib/db';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const MONTHS = [
   { value: 'all', label: 'Semua Bulan Lahir' },
@@ -105,6 +107,10 @@ export default function AlumniList() {
       'Bersedia Melayani',
       'Minat Pelayanan',
       'Minat Pelayanan Lainnya',
+      'Status KTB',
+      'Nama KTB',
+      'Pemimpin KTB',
+      'Bersedia Gabung KTB',
       'Pendidikan Terakhir',
       'Tahun Lulus',
       'Institusi',
@@ -133,6 +139,10 @@ export default function AlumniList() {
         `"${alumni.isWillingToServe ? 'Ya' : 'Tidak'}"`,
         `"${(alumni.serviceInterests || []).join(', ')}"`,
         `"${alumni.otherServiceInterest || ''}"`,
+        `"${alumni.isInKTB ? 'Sudah' : 'Belum'}"`,
+        `"${alumni.ktbName || ''}"`,
+        `"${alumni.ktbLeader || ''}"`,
+        `"${alumni.isWillingToJoinKTB ? 'Ya' : 'Tidak'}"`,
         `"${lastEdu?.level || ''}"`,
         `"${lastEdu?.graduationYear || ''}"`,
         `"${lastEdu?.institution || ''}"`,
@@ -158,10 +168,108 @@ export default function AlumniList() {
     document.body.removeChild(link);
   };
 
+  const exportToPDF = () => {
+    if (filteredAlumni.length === 0) return;
+
+    const doc = new jsPDF('l', 'mm', 'a4'); // Change to landscape
+    const dateStr = new Date().toLocaleDateString('id-ID', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    });
+
+    // Header
+    doc.setFontSize(18);
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.text('Laporan Ringkasan Data Alumni', 14, 22);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(100, 116, 139); // slate-500
+    doc.text('Persekutuan Alumni Kristen Kota Ambon, Perkantas Maluku', 14, 30);
+    doc.text(`Tanggal Laporan: ${dateStr}`, 14, 37);
+
+    // Summary Stats
+    doc.setFontSize(14);
+    doc.setTextColor(15, 23, 42);
+    doc.text('Ringkasan Statistik', 14, 50);
+
+    const juniorCount = filteredAlumni.filter(a => {
+      const firstGrad = Math.min(...a.educations.map(e => e.graduationYear));
+      return getAlumniCategory(firstGrad) === 'Junior';
+    }).length;
+    const madyaCount = filteredAlumni.filter(a => {
+      const firstGrad = Math.min(...a.educations.map(e => e.graduationYear));
+      return getAlumniCategory(firstGrad) === 'Madya';
+    }).length;
+    const seniorCount = filteredAlumni.filter(a => {
+      const firstGrad = Math.min(...a.educations.map(e => e.graduationYear));
+      return getAlumniCategory(firstGrad) === 'Senior';
+    }).length;
+
+    autoTable(doc, {
+      startY: 55,
+      head: [['Kategori', 'Jumlah Alumni']],
+      body: [
+        ['Alumni Junior', juniorCount.toString()],
+        ['Alumni Madya', madyaCount.toString()],
+        ['Alumni Senior', seniorCount.toString()],
+        ['Total Terfilter', filteredAlumni.length.toString()],
+        ['Total Keseluruhan', alumniList.length.toString()],
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: [59, 130, 246] }, // blue-600
+      margin: { left: 14 },
+      tableWidth: 100
+    });
+
+    // Detailed Table
+    doc.setFontSize(14);
+    doc.text('Daftar Alumni', 14, (doc as any).lastAutoTable.finalY + 15);
+
+    const tableData = filteredAlumni.map((a, index) => {
+      const firstGrad = Math.min(...a.educations.map(e => e.graduationYear));
+      const category = getAlumniCategory(firstGrad);
+      const lastEdu = [...a.educations].sort((a, b) => b.graduationYear - a.graduationYear)[0];
+      const ttl = `${a.birthPlace}, ${new Date(a.birthDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+      const kontak = `${a.email}\n${a.phone}`;
+      
+      return [
+        (index + 1).toString(),
+        a.fullName,
+        category,
+        ttl,
+        `${lastEdu?.level} (${lastEdu?.graduationYear})`,
+        a.mainJob,
+        kontak,
+        a.address
+      ];
+    });
+
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 20,
+      head: [['No.', 'Nama Lengkap', 'Kategori', 'TTL', 'Pendidikan', 'Pekerjaan', 'Kontak', 'Alamat']],
+      body: tableData,
+      styles: { fontSize: 7, cellPadding: 2 },
+      headStyles: { fillColor: [15, 23, 42] }, // slate-900
+      columnStyles: {
+        0: { cellWidth: 8 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 20 },
+        3: { cellWidth: 40 },
+        4: { cellWidth: 25 },
+        5: { cellWidth: 35 },
+        6: { cellWidth: 45 },
+        7: { cellWidth: 65 },
+      }
+    });
+
+    doc.save(`laporan_alumni_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   const filteredAlumni = alumniList.filter(alumni => {
     const matchesSearch = alumni.fullName.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const graduationYears = alumni.educations.map(e => e.graduationYear).filter(y => y > 0);
+    const graduationYears = (alumni.educations || []).map(e => e.graduationYear).filter(y => y > 0);
     const firstGrad = graduationYears.length > 0 ? Math.min(...graduationYears) : new Date().getFullYear();
     const category = getAlumniCategory(firstGrad);
     const matchesCategory = categoryFilter === 'all' || category === categoryFilter;
@@ -214,6 +322,14 @@ export default function AlumniList() {
             <Download className="w-4 h-4" />
             Ekspor ke Excel (CSV)
           </Button>
+          <Button 
+            onClick={exportToPDF}
+            variant="outline"
+            className="border-red-600 text-red-600 hover:bg-red-50 gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Ekspor ke PDF
+          </Button>
         </div>
       </div>
 
@@ -233,18 +349,18 @@ export default function AlumniList() {
 
         <div className="flex items-center gap-2">
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="h-9 border-none bg-slate-50 w-[160px] focus:ring-1 focus:ring-blue-500">
+            <SelectTrigger className="h-9 border-none bg-slate-50 w-[180px] focus:ring-1 focus:ring-blue-500">
               <div className="flex items-center gap-2 text-slate-600">
                 <Filter className="w-4 h-4 text-slate-400" />
-                <span className="text-xs font-bold text-slate-400 uppercase">Kat:</span>
-                <SelectValue placeholder="Kategori" />
+                <span className="text-xs font-bold text-slate-400 uppercase">Kategori:</span>
+                <SelectValue placeholder="Semua Kategori" />
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua</SelectItem>
-              <SelectItem value="Junior">Junior</SelectItem>
-              <SelectItem value="Madya">Madya</SelectItem>
-              <SelectItem value="Senior">Senior</SelectItem>
+              <SelectItem value="all">Semua Kategori</SelectItem>
+              <SelectItem value="Junior">Junior (&lt; 5 thn)</SelectItem>
+              <SelectItem value="Madya">Madya (5-15 thn)</SelectItem>
+              <SelectItem value="Senior">Senior (&gt; 15 thn)</SelectItem>
             </SelectContent>
           </Select>
 
@@ -332,9 +448,10 @@ export default function AlumniList() {
               <TableBody>
                 {filteredAlumni.length > 0 ? (
                   filteredAlumni.map((alumni, index) => {
-                    const firstGrad = Math.min(...alumni.educations.map(e => e.graduationYear));
+                    const graduationYears = (alumni.educations || []).map(e => e.graduationYear).filter(y => y > 0);
+                    const firstGrad = graduationYears.length > 0 ? Math.min(...graduationYears) : new Date().getFullYear();
                     const category = getAlumniCategory(firstGrad);
-                    const lastEdu = [...alumni.educations].sort((a, b) => b.graduationYear - a.graduationYear)[0];
+                    const lastEdu = [...(alumni.educations || [])].sort((a, b) => b.graduationYear - a.graduationYear)[0];
                     
                     return (
                       <TableRow key={alumni.id} className="hover:bg-slate-50/50 transition-colors">
@@ -595,7 +712,7 @@ export default function AlumniList() {
                         <Sparkles className="w-5 h-5 text-amber-500" />
                         Minat & Potensi
                       </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         <div className="space-y-3">
                           <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Bidang Keahlian</p>
                           <div className="flex flex-wrap gap-2">
@@ -635,6 +752,29 @@ export default function AlumniList() {
                               </div>
                             </div>
                           )}
+                        </div>
+                        <div className="space-y-3">
+                          <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Informasi KTB</p>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Badge className={selectedAlumni.isInKTB ? "bg-blue-600" : "bg-slate-400"}>
+                                {selectedAlumni.isInKTB ? "Sudah ber-KTB" : "Belum ber-KTB"}
+                              </Badge>
+                            </div>
+                            {selectedAlumni.isInKTB ? (
+                              <div className="space-y-1">
+                                <p className="text-xs text-slate-500"><span className="font-bold">Nama KTB:</span> {selectedAlumni.ktbName || '-'}</p>
+                                <p className="text-xs text-slate-500"><span className="font-bold">Pemimpin:</span> {selectedAlumni.ktbLeader || '-'}</p>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <p className="text-xs text-slate-500 font-bold">Bersedia Gabung:</p>
+                                <Badge variant="outline" className={selectedAlumni.isWillingToJoinKTB ? "border-emerald-500 text-emerald-600" : "border-red-500 text-red-600"}>
+                                  {selectedAlumni.isWillingToJoinKTB ? "Ya" : "Tidak"}
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

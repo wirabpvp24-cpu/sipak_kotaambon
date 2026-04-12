@@ -33,6 +33,10 @@
         "isWillingToServe": { "type": "boolean" },
         "serviceInterests": { "type": "array", "items": { "type": "string" } },
         "otherServiceInterest": { "type": "string" },
+        "isInKTB": { "type": "boolean" },
+        "ktbName": { "type": "string" },
+        "ktbLeader": { "type": "string" },
+        "isWillingToJoinKTB": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["fullName", "gender", "email", "phone", "educations", "skills"]

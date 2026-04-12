@@ -53,6 +53,8 @@ service cloud.firestore {
              data.get('skills', []) is list && data.get('skills', []).size() > 0 &&
              data.get('isWillingToServe', false) is bool &&
              data.get('serviceInterests', []) is list &&
+             data.get('isInKTB', false) is bool &&
+             (!('isWillingToJoinKTB' in data) || data.isWillingToJoinKTB is bool) &&
              (!('uniqueCode' in data) || (data.uniqueCode is string && data.uniqueCode.size() < 50));
     }
 

@@ -33,6 +33,11 @@ export interface Alumni {
   isWillingToServe: boolean;
   serviceInterests: string[];
   otherServiceInterest?: string;
+  // KTB Information
+  isInKTB: boolean;
+  ktbName?: string;
+  ktbLeader?: string;
+  isWillingToJoinKTB?: boolean;
   uniqueCode?: string;
   createdAt: string;
 }
