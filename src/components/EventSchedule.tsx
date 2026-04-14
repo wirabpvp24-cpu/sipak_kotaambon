@@ -555,7 +555,7 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
                                     <>
                                       <Button 
                                         size="sm" 
-                                        className="bg-blue-600 hover:bg-blue-700 gap-2 w-fit"
+                                        className="bg-blue-600 hover:bg-blue-700 gap-2 w-full sm:w-[200px] justify-center"
                                         onClick={() => setSelectedEventForAttendance(event)}
                                         disabled={!isOngoing}
                                       >
@@ -575,7 +575,7 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
                                     <Button 
                                       variant="outline" 
                                       size="sm" 
-                                      className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-2 w-fit"
+                                      className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-2 w-full sm:w-[200px] justify-center"
                                       onClick={() => setSelectedEventForStats(event)}
                                     >
                                       <BarChart3 className="w-4 h-4" />

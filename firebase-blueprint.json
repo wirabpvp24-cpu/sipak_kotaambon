@@ -41,6 +41,22 @@
       },
       "required": ["fullName", "gender", "email", "phone", "educations", "skills"]
     },
+    "Suggestion": {
+      "title": "Suggestion",
+      "description": "Kotak saran dan masukan dari pengunjung",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string", "description": "Nama Lengkap" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string", "description": "Nomor Handphone" },
+        "isAlumni": { "type": "string", "enum": ["Ya", "Tidak"], "description": "Apakah Anda alumni Perkantas?" },
+        "perkantasOrigin": { "type": "string", "description": "Asal Perkantas (Provinsi)" },
+        "content": { "type": "string", "description": "Saran dan Masukan" },
+        "isRead": { "type": "boolean", "description": "Status sudah dibaca oleh admin" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fullName", "email", "phone", "isAlumni", "content", "createdAt"]
+    },
     "Event": {
       "title": "Event",
       "description": "Jadwal kegiatan alumni",
@@ -91,11 +107,12 @@
         "alumniId": { "type": "string" },
         "alumniName": { "type": "string" },
         "alumniGender": { "type": "string", "enum": ["Laki-laki", "Perempuan"] },
+        "phone": { "type": "string", "description": "Nomor Handphone" },
         "status": { "type": "string", "enum": ["Hadir", "Tidak Hadir"] },
         "feedback": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["eventId", "alumniId", "alumniName", "alumniGender", "status", "createdAt"]
+      "required": ["eventId", "alumniId", "alumniName", "alumniGender", "phone", "status", "createdAt"]
     }
   },
   "firestore": {
@@ -110,6 +127,10 @@
     "/event_responses/{responseId}": {
       "schema": "EventResponse",
       "description": "Koleksi kehadiran dan masukan alumni"
+    },
+    "/suggestions/{suggestionId}": {
+      "schema": "Suggestion",
+      "description": "Koleksi kotak saran dari pengunjung"
     },
     "/settings/profile": {
       "schema": "Profile",

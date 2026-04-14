@@ -29,12 +29,13 @@ export default function EventAttendanceDialog({ isOpen, onClose, event }: EventA
   
   const [fullName, setFullName] = useState('');
   const [gender, setGender] = useState<'Laki-laki' | 'Perempuan'>('Laki-laki');
+  const [phone, setPhone] = useState('');
   const [feedback, setFeedback] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim()) {
-      setError('Nama lengkap wajib diisi.');
+    if (!fullName.trim() || !phone.trim() || !feedback.trim()) {
+      setError('Mohon lengkapi semua field yang wajib diisi.');
       return;
     }
 
@@ -61,6 +62,7 @@ export default function EventAttendanceDialog({ isOpen, onClose, event }: EventA
         alumniId: 'guest', // No longer verifying alumni ID
         alumniName: fullName,
         alumniGender: gender,
+        phone: phone,
         status: 'Hadir',
         feedback,
         createdAt: new Date().toISOString()
@@ -78,6 +80,7 @@ export default function EventAttendanceDialog({ isOpen, onClose, event }: EventA
     setStep('form');
     setFullName('');
     setGender('Laki-laki');
+    setPhone('');
     setError('');
     setFeedback('');
     onClose();
@@ -102,6 +105,18 @@ export default function EventAttendanceDialog({ isOpen, onClose, event }: EventA
                 placeholder="Masukkan nama lengkap Anda"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Nomor Handphone</Label>
+              <Input 
+                id="phone"
+                type="tel"
+                placeholder="08xxxxxxxxxx"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 required
               />
             </div>
@@ -135,13 +150,14 @@ export default function EventAttendanceDialog({ isOpen, onClose, event }: EventA
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="feedback">Saran & Masukan (Opsional)</Label>
+              <Label htmlFor="feedback">Saran & Masukan</Label>
               <Textarea 
                 id="feedback"
                 placeholder="Berikan saran atau masukan Anda untuk kegiatan ini..."
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
                 className="resize-none h-24"
+                required
               />
             </div>
 

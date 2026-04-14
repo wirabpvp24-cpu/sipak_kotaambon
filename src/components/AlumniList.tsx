@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { Search, User, Mail, Phone, GraduationCap, MapPin, Eye, Calendar, Briefcase, Heart, Globe, Filter, Edit, Trash2, Users, ArrowUpDown, Download, Plus, Lock, Sparkles, History } from 'lucide-react';
+import { Search, User, Mail, Phone, GraduationCap, MapPin, Eye, EyeOff, Calendar, Briefcase, Heart, Globe, Filter, Edit, Trash2, Users, ArrowUpDown, Download, Plus, Lock, Sparkles, History } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -27,7 +27,7 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alumni, getAlumniCategory, AlumniCategory } from '@/types';
 import { dbService } from '@/lib/db';
-import { jsPDF } from 'jspdf';
+import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 const MONTHS = [
@@ -134,6 +134,7 @@ export default function AlumniList() {
   const [isAddingAlumni, setIsAddingAlumni] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const unsubscribe = dbService.subscribeAlumni((data) => {
@@ -601,7 +602,12 @@ export default function AlumniList() {
       </Card>
 
       {/* Detail Dialog - Outside the loop */}
-      <Dialog open={!!selectedAlumni} onOpenChange={(open) => !open && setSelectedAlumni(null)}>
+      <Dialog open={!!selectedAlumni} onOpenChange={(open) => {
+        if (!open) {
+          setSelectedAlumni(null);
+          setShowPassword(false);
+        }
+      }}>
         <DialogContent className="sm:max-w-[900px] w-[95vw] max-h-[90vh] flex flex-col p-0 overflow-hidden border-none shadow-2xl">
           <DialogHeader className="p-6 border-b bg-white sticky top-0 z-10">
             <div className="flex justify-between items-start">
@@ -709,16 +715,24 @@ export default function AlumniList() {
                             variant="outline"
                             className={cn(
                               "px-3 border-transparent",
-                              getAlumniCategory(Math.min(...selectedAlumni.educations.map(e => e.graduationYear))) === 'Senior' ? "bg-orange-100 text-orange-700" : 
-                              getAlumniCategory(Math.min(...selectedAlumni.educations.map(e => e.graduationYear))) === 'Madya' ? "bg-emerald-100 text-emerald-700" : 
-                              "bg-blue-100 text-blue-700"
+                              (selectedAlumni.educations && selectedAlumni.educations.length > 0) ? (
+                                getAlumniCategory(Math.min(...selectedAlumni.educations.map(e => e.graduationYear))) === 'Senior' ? "bg-orange-100 text-orange-700" : 
+                                getAlumniCategory(Math.min(...selectedAlumni.educations.map(e => e.graduationYear))) === 'Madya' ? "bg-emerald-100 text-emerald-700" : 
+                                "bg-blue-100 text-blue-700"
+                              ) : "bg-slate-100 text-slate-700"
                             )}
                           >
-                            Alumni {getAlumniCategory(Math.min(...selectedAlumni.educations.map(e => e.graduationYear)))}
+                            Alumni {(selectedAlumni.educations && selectedAlumni.educations.length > 0) ? getAlumniCategory(Math.min(...selectedAlumni.educations.map(e => e.graduationYear))) : 'Baru'}
                           </Badge>
                           {selectedAlumni.password && (
-                            <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700 gap-1">
-                              <Lock className="w-3 h-3" /> PW: {selectedAlumni.password}
+                            <Badge 
+                              variant="outline" 
+                              className="bg-blue-50 border-blue-200 text-blue-700 gap-1 cursor-pointer hover:bg-blue-100 transition-colors"
+                              onClick={() => setShowPassword(!showPassword)}
+                            >
+                              <Lock className="w-3 h-3" /> 
+                              PW: {showPassword ? selectedAlumni.password : '••••••••'}
+                              {showPassword ? <EyeOff className="w-3 h-3 ml-1" /> : <Eye className="w-3 h-3 ml-1" />}
                             </Badge>
                           )}
                         </div>
@@ -740,7 +754,6 @@ export default function AlumniList() {
                         Informasi Pribadi
                       </h4>
                       <div className="grid grid-cols-1 gap-4">
-                        <DetailItem label="Password Alumni" value={selectedAlumni.password || '-'} icon={<Lock className="w-4 h-4" />} />
                         <DetailItem label="Tempat, Tanggal Lahir" value={`${selectedAlumni.birthPlace}, ${formatLongDate(selectedAlumni.birthDate)}`} icon={<Calendar className="w-4 h-4" />} />
                         <DetailItem label="Status Pernikahan" value={selectedAlumni.maritalStatus} icon={<Users className="w-4 h-4" />} />
                         <DetailItem label="Pekerjaan Utama" value={selectedAlumni.mainJob} icon={<Briefcase className="w-4 h-4" />} />
@@ -855,7 +868,7 @@ export default function AlumniList() {
                       Riwayat Pendidikan
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {selectedAlumni.educations.sort((a,b) => b.graduationYear - a.graduationYear).map((edu, idx) => (
+                      {(selectedAlumni.educations || []).sort((a,b) => b.graduationYear - a.graduationYear).map((edu, idx) => (
                         <div key={idx} className="p-4 rounded-xl border border-slate-100 bg-white shadow-sm hover:shadow-md transition-shadow">
                           <div className="flex items-center gap-3 mb-3">
                             <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold">

@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, UserPlus, GraduationCap, Users, LogOut, MessageSquare, Lock, Settings, Calendar, History } from 'lucide-react';
+import { LayoutDashboard, UserPlus, GraduationCap, Users, LogOut, MessageSquare, Lock, Settings, Calendar, History, Inbox } from 'lucide-react';
 import RegistrationForm from './components/RegistrationForm';
 import Dashboard from './components/Dashboard';
 import AlumniList from './components/AlumniList';
@@ -12,14 +12,18 @@ import MessageCenter from './components/MessageCenter';
 import EventSchedule from './components/EventSchedule';
 import LoginPage from './components/LoginPage';
 import AdminSettings from './components/AdminSettings';
+import AdminSuggestions from './components/AdminSuggestions';
+import SuggestionBox from './components/SuggestionBox';
 import NotificationBell from './components/NotificationBell';
 import WelcomeModal from './components/WelcomeModal';
 import ContactModal from './components/ContactModal';
 import Profile from './components/Profile';
 import Home from './components/Home';
 import { Button } from './components/ui/button';
-import { auth, onAuthStateChanged, signOut, signInAnonymously } from './lib/firebase';
+import { auth, onAuthStateChanged, signOut, signInAnonymously, db } from './lib/firebase';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { Phone } from 'lucide-react';
+import { Toaster } from 'sonner';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('register');
@@ -28,6 +32,18 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [showContact, setShowContact] = useState(false);
+  const [showSuggestionBox, setShowSuggestionBox] = useState(false);
+  const [unreadSuggestions, setUnreadSuggestions] = useState(0);
+
+  useEffect(() => {
+    if (isAdmin) {
+      const q = query(collection(db, 'suggestions'), where('isRead', '==', false));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        setUnreadSuggestions(snapshot.size);
+      });
+      return () => unsubscribe();
+    }
+  }, [isAdmin]);
 
   useEffect(() => {
     // Check local session
@@ -128,6 +144,15 @@ export default function App() {
         onClose={() => setShowContact(false)} 
       />
 
+      <SuggestionBox 
+        isOpen={showSuggestionBox} 
+        onClose={() => setShowSuggestionBox(false)}
+        onSuccess={() => {
+          setShowSuggestionBox(false);
+          setActiveTab('register');
+        }}
+      />
+
       {/* Header Marquee */}
       <div className="py-3 bg-slate-900 overflow-hidden shrink-0">
         <div className="animate-marquee">
@@ -180,15 +205,26 @@ export default function App() {
             </Button>
 
             {!isAdmin && (
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setShowContact(true)}
-                className="gap-2"
-              >
-                <Phone className="w-4 h-4" />
-                <span className="hidden sm:inline">Kontak</span>
-              </Button>
+              <>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setShowContact(true)}
+                  className="gap-2"
+                >
+                  <Phone className="w-4 h-4" />
+                  <span className="hidden sm:inline">Kontak</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setShowSuggestionBox(true)}
+                  className="w-9 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  title="Kotak Saran"
+                >
+                  <Inbox className="w-4 h-4" />
+                </Button>
+              </>
             )}
 
             {/* Admin Only Tabs */}
@@ -221,6 +257,22 @@ export default function App() {
                   <MessageSquare className="w-4 h-4" />
                   <span className="hidden sm:inline">Pesan</span>
                 </Button>
+                
+                <Button 
+                  variant={activeTab === 'suggestions' ? 'default' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setActiveTab('suggestions')}
+                  className="w-9 p-0 relative"
+                  title="Kotak Saran"
+                >
+                  <Inbox className="w-4 h-4" />
+                  {unreadSuggestions > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
+                      {unreadSuggestions > 9 ? '9+' : unreadSuggestions}
+                    </span>
+                  )}
+                </Button>
+
                 <Button 
                   variant={activeTab === 'settings' ? 'default' : 'ghost'} 
                   size="sm"
@@ -290,6 +342,9 @@ export default function App() {
             {activeTab === 'messages' && (
               <MessageCenter />
             )}
+            {activeTab === 'suggestions' && (
+              <AdminSuggestions />
+            )}
             {activeTab === 'settings' && (
               <AdminSettings />
             )}
@@ -312,6 +367,7 @@ export default function App() {
       <footer className="py-8 border-t border-slate-200 text-center text-slate-400 text-sm">
         <p>&copy; {new Date().getFullYear()} SI GANDONG. Sistem Informasi Pengelolaan Data dan Pelayanan Alumni Terintegrasi Persekutuan Alumni Kristen Kota Ambon, Perkantas Maluku.</p>
       </footer>
+      <Toaster position="top-center" richColors />
     </div>
   );
 }

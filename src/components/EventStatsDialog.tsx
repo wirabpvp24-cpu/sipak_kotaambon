@@ -18,7 +18,8 @@ import {
   PieChart,
   Loader2,
   Calendar,
-  ChevronRight
+  ChevronRight,
+  Phone
 } from 'lucide-react';
 import { dbService } from '@/lib/db';
 import { Event, EventResponse } from '@/types';
@@ -137,12 +138,18 @@ export default function EventStatsDialog({ isOpen, onClose, event }: EventStatsD
                     feedbacks.map((res) => (
                       <div key={res.id} className="p-4 bg-white border border-slate-100 rounded-xl shadow-sm space-y-2">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className={cn(
-                              "w-2 h-2 rounded-full",
-                              res.alumniGender === 'Laki-laki' ? "bg-blue-400" : "bg-pink-400"
-                            )}></div>
-                            <span className="text-xs font-bold text-slate-700">{res.alumniName}</span>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
+                              <div className={cn(
+                                "w-2 h-2 rounded-full",
+                                res.alumniGender === 'Laki-laki' ? "bg-blue-400" : "bg-pink-400"
+                              )}></div>
+                              <span className="text-xs font-bold text-slate-700">{res.alumniName}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                              <Phone className="w-2.5 h-2.5" />
+                              {res.phone}
+                            </div>
                           </div>
                           <span className="text-[10px] text-slate-400">
                             {new Date(res.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}

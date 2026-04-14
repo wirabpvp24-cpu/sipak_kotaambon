@@ -72,8 +72,19 @@ service cloud.firestore {
              data.get('alumniId', '') is string &&
              data.get('alumniName', '') is string &&
              data.get('alumniGender', '') in ['Laki-laki', 'Perempuan'] &&
+             data.get('phone', '') is string && data.get('phone', '').size() >= 10 &&
              data.get('status', '') in ['Hadir', 'Tidak Hadir'] &&
              (!('feedback' in data) || (data.feedback is string && data.feedback.size() < 1000));
+    }
+
+    function isValidSuggestion(data) {
+      return data.get('fullName', '') is string && data.get('fullName', '').size() > 0 && data.get('fullName', '').size() < 200 &&
+             data.get('email', '') is string && data.get('email', '').matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") &&
+             data.get('phone', '') is string && data.get('phone', '').size() >= 10 &&
+             data.get('isAlumni', '') is string && data.get('isAlumni', '') in ['Ya', 'Tidak'] &&
+             (!('perkantasOrigin' in data) || (data.perkantasOrigin is string)) &&
+             data.get('content', '') is string && data.get('content', '').size() > 0 && data.get('content', '').size() < 5000 &&
+             data.get('createdAt', '') is string;
     }
 
     match /alumni/{alumniId} {
@@ -93,6 +104,12 @@ service cloud.firestore {
     match /event_responses/{responseId} {
       allow read: if isAdmin();
       allow create: if isAuthenticated() && isValidEventResponse(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+
+    match /suggestions/{suggestionId} {
+      allow read: if isAdmin();
+      allow create: if isValidSuggestion(request.resource.data);
       allow update, delete: if isAdmin();
     }
     

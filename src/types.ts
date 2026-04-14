@@ -68,8 +68,21 @@ export interface EventResponse {
   alumniId: string;
   alumniName: string;
   alumniGender: Gender;
+  phone: string;
   status: 'Hadir' | 'Tidak Hadir';
   feedback?: string;
+  createdAt: string;
+}
+
+export interface Suggestion {
+  id?: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  isAlumni: 'Ya' | 'Tidak';
+  perkantasOrigin?: string;
+  content: string;
+  isRead: boolean;
   createdAt: string;
 }
 

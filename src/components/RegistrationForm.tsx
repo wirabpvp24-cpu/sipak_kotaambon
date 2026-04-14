@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, Save, User, Phone, Mail, MapPin, Briefcase, GraduationCap, Calendar, Loader2, AlertCircle, History, UserCheck, UserPlus, Heart, Sparkles, Eye, EyeOff, Upload, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, Save, User, Phone, Mail, MapPin, Briefcase, GraduationCap, Calendar, Loader2, AlertCircle, History, UserCheck, UserPlus, Heart, Sparkles, Eye, EyeOff, Upload, Image as ImageIcon, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -302,6 +302,16 @@ export default function RegistrationForm({
 
     try {
       if (isEdit || flowState === 'update') {
+        // Check if password is used by someone else
+        if (formData.password) {
+          const existingPassword = await dbService.findAlumniByPassword(formData.password);
+          if (existingPassword && existingPassword.id !== formData.id) {
+            setSubmitError("Password ini sudah digunakan oleh alumni lain. Silakan buat password yang berbeda untuk keamanan Anda.");
+            setIsSubmitting(false);
+            return;
+          }
+        }
+
         await dbService.updateAlumni(cleanedData as Alumni);
         if (isEdit) onComplete();
         else {
@@ -313,9 +323,16 @@ export default function RegistrationForm({
         // Check for duplicates one last time before adding
         const existingEmail = await dbService.findAlumniByEmailOrPhone(formData.email!);
         const existingPhone = await dbService.findAlumniByEmailOrPhone(formData.phone!);
+        const existingPassword = await dbService.findAlumniByPassword(formData.password!);
         
         if (existingEmail || existingPhone) {
           setSubmitError("Email atau Nomor HP sudah terdaftar. Silakan gunakan menu 'Update Data' untuk mengubah data Anda.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        if (existingPassword) {
+          setSubmitError("Password ini sudah digunakan oleh alumni lain. Silakan buat password yang berbeda untuk keamanan Anda.");
           setIsSubmitting(false);
           return;
         }
