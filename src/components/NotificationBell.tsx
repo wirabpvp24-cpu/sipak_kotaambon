@@ -86,7 +86,8 @@ export default function NotificationBell() {
       const diffTime = eventDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       
-      return diffDays >= 0 && diffDays <= 2;
+      // Only H-1 and H-2 (Besok and Lusa)
+      return diffDays >= 1 && diffDays <= 2;
     }).map(ev => {
       const eventDate = new Date(ev.date);
       const diffTime = eventDate.getTime() - today.getTime();
@@ -140,15 +141,13 @@ export default function NotificationBell() {
                       <div className="flex items-start gap-3">
                         <div className={cn(
                           "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                          event.diffDays === 0 ? "bg-blue-100 text-blue-600" : "bg-indigo-100 text-indigo-600"
+                          event.diffDays === 1 ? "bg-blue-100 text-blue-600" : "bg-indigo-100 text-indigo-600"
                         )}>
                           <Calendar className="w-4 h-4" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-slate-900">
-                            {event.diffDays === 0 ? 'Hari Ini!' : 
-                             event.diffDays === 1 ? 'Besok!' : 
-                             'Lusa!'}
+                            {event.diffDays === 1 ? 'Besok!' : 'Lusa!'}
                           </p>
                           <p className="text-xs text-slate-500 mb-1">
                             Kegiatan: <span className="font-semibold text-slate-700">{event.title}</span>
@@ -212,7 +211,7 @@ export default function NotificationBell() {
           
           <div className="p-3 border-t border-slate-100 bg-slate-50/50 shrink-0">
             <p className="text-[10px] text-center text-slate-400">
-              Menampilkan pengingat H-0 s/d H-2
+              Kegiatan: H-1 s/d H-2 | Ultah: H-0 s/d H-2
             </p>
           </div>
         </div>

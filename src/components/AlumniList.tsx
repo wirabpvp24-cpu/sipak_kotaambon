@@ -171,15 +171,22 @@ export default function AlumniList() {
       'Nama KTB',
       'Pemimpin KTB',
       'Bersedia Gabung KTB',
+      'Riwayat Pendidikan Lengkap',
       'Pendidikan Terakhir',
-      'Tahun Lulus',
-      'Institusi',
+      'Program Studi Terakhir',
+      'Tahun Lulus Terakhir',
+      'Institusi Terakhir',
       'Tanggal Pendaftaran'
     ];
 
     // Map data to rows
     const rows = alumniList.map(alumni => {
-      const lastEdu = [...alumni.educations].sort((a, b) => b.graduationYear - a.graduationYear)[0];
+      const sortedEducations = [...alumni.educations].sort((a, b) => b.graduationYear - a.graduationYear);
+      const lastEdu = sortedEducations[0];
+      const allEducations = sortedEducations.map(edu => 
+        `${edu.level} - ${edu.major} - ${edu.institution} (${edu.graduationYear})`
+      ).join(' | ');
+
       return [
         `"${alumni.fullName}"`,
         `"${alumni.gender}"`,
@@ -203,7 +210,9 @@ export default function AlumniList() {
         `"${alumni.ktbName || ''}"`,
         `"${alumni.ktbLeader || ''}"`,
         `"${alumni.isWillingToJoinKTB ? 'Ya' : 'Tidak'}"`,
+        `"${allEducations}"`,
         `"${lastEdu?.level || ''}"`,
+        `"${lastEdu?.major || ''}"`,
         `"${lastEdu?.graduationYear || ''}"`,
         `"${lastEdu?.institution || ''}"`,
         `"${alumni.createdAt ? new Date(alumni.createdAt).toLocaleString('id-ID', { hour12: false }) : ''}"`

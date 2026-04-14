@@ -9,7 +9,7 @@ export interface Education {
   major: string;
 }
 
-export type MainJob = 'Pegawai Swasta' | 'Wiraswasta' | 'Tenaga Medis' | 'Pendidik' | 'TNI/Polri' | 'PNS' | 'BUMN/BUMD' | 'Pensiunan' | 'Lainnya';
+export type MainJob = 'Pegawai Swasta' | 'Wiraswasta' | 'Tenaga Medis' | 'Pendidik' | 'TNI/Polri' | 'PNS' | 'BUMN/BUMD' | 'Pensiunan' | 'Belum Bekerja' | 'Lainnya';
 
 export interface Alumni {
   id?: string;

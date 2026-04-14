@@ -24,7 +24,21 @@
             }
           }
         },
-        "lastJob": { "type": "string" },
+        "mainJob": {
+          "type": "string",
+          "enum": [
+            "Pegawai Swasta",
+            "Wiraswasta",
+            "Tenaga Medis",
+            "Pendidik",
+            "TNI/Polri",
+            "PNS",
+            "BUMN/BUMD",
+            "Pensiunan",
+            "Belum Bekerja",
+            "Lainnya"
+          ]
+        },
         "address": { "type": "string" },
         "province": { "type": "string" },
         "city": { "type": "string" },

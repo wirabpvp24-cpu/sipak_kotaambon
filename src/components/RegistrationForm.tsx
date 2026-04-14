@@ -27,7 +27,7 @@ import { dbService } from '@/lib/db';
 import { INDONESIA_REGIONS } from '@/constants/regions';
 
 const EDUCATION_LEVELS: EducationLevel[] = ['DIII', 'DIV', 'S1', 'S2', 'S3'];
-const MAIN_JOBS: MainJob[] = ['Pegawai Swasta', 'Wiraswasta', 'Tenaga Medis', 'Pendidik', 'TNI/Polri', 'PNS', 'BUMN/BUMD', 'Pensiunan', 'Lainnya'];
+const MAIN_JOBS: MainJob[] = ['Pegawai Swasta', 'Wiraswasta', 'Tenaga Medis', 'Pendidik', 'TNI/Polri', 'PNS', 'BUMN/BUMD', 'Pensiunan', 'Belum Bekerja', 'Lainnya'];
 
 const SKILLS_OPTIONS = [
   'Pendidikan & Pengajaran',
