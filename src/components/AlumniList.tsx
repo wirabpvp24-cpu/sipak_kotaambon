@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { Search, User, Mail, Phone, GraduationCap, MapPin, Eye, Calendar, Briefcase, Heart, Globe, Filter, Edit, Trash2, Users, ArrowUpDown, Download, Plus, Lock, Sparkles } from 'lucide-react';
+import { Search, User, Mail, Phone, GraduationCap, MapPin, Eye, Calendar, Briefcase, Heart, Globe, Filter, Edit, Trash2, Users, ArrowUpDown, Download, Plus, Lock, Sparkles, History } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -27,7 +27,7 @@ import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alumni, getAlumniCategory, AlumniCategory } from '@/types';
 import { dbService } from '@/lib/db';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 const MONTHS = [
@@ -61,6 +61,65 @@ function DetailItem({ label, value, icon }: { label: string, value: string, icon
 }
 
 type SortOrder = 'newest' | 'oldest' | 'birth-youngest' | 'birth-oldest' | 'name-asc' | 'name-desc';
+
+// Helper to parse date strings that might be in DD/MM/YYYY or YYYY-MM-DD format
+function parseDate(dateStr: string): Date {
+  if (!dateStr) return new Date(0);
+  
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+    const [d, m, y] = dateStr.split('/');
+    return new Date(`${y}-${m}-${d}`);
+  }
+  
+  const date = new Date(dateStr);
+  return isNaN(date.getTime()) ? new Date(0) : date;
+}
+
+// Helper to format date strings that might be in DD/MM/YYYY or YYYY-MM-DD format
+function formatDisplayDate(dateStr: string) {
+  if (!dateStr) return '-';
+  
+  // If it's already DD/MM/YYYY, just return it
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+    return dateStr;
+  }
+  
+  // If it's YYYY-MM-DD, convert to DD/MM/YYYY
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+  }
+  
+  // Fallback to native Date if possible
+  try {
+    const date = new Date(dateStr);
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+  } catch (e) {
+    // ignore
+  }
+  
+  return dateStr;
+}
+
+// Helper for long date format (e.g. 31 Desember 1990)
+function formatLongDate(dateStr: string) {
+  if (!dateStr) return '-';
+  
+  let date: Date;
+  
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+    const [d, m, y] = dateStr.split('/');
+    date = new Date(`${y}-${m}-${d}`);
+  } else {
+    date = new Date(dateStr);
+  }
+  
+  if (isNaN(date.getTime())) return dateStr;
+  
+  return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+}
 
 export default function AlumniList() {
   const [alumniList, setAlumniList] = useState<Alumni[]>([]);
@@ -230,7 +289,7 @@ export default function AlumniList() {
       const firstGrad = Math.min(...a.educations.map(e => e.graduationYear));
       const category = getAlumniCategory(firstGrad);
       const lastEdu = [...a.educations].sort((a, b) => b.graduationYear - a.graduationYear)[0];
-      const ttl = `${a.birthPlace}, ${new Date(a.birthDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+      const ttl = `${a.birthPlace}, ${formatLongDate(a.birthDate)}`;
       const kontak = `${a.email}\n${a.phone}`;
       
       return [
@@ -276,7 +335,7 @@ export default function AlumniList() {
     
     const matchesCity = cityFilter === 'all' || alumni.city === cityFilter;
 
-    const birthMonth = new Date(alumni.birthDate).getMonth().toString();
+    const birthMonth = parseDate(alumni.birthDate).getMonth().toString();
     const matchesMonth = monthFilter === 'all' || birthMonth === monthFilter;
 
     return matchesSearch && matchesCategory && matchesCity && matchesMonth;
@@ -285,8 +344,8 @@ export default function AlumniList() {
     if (sortOrder === 'name-desc') return b.fullName.localeCompare(a.fullName);
     
     if (sortOrder === 'birth-youngest' || sortOrder === 'birth-oldest') {
-      const yearA = new Date(a.birthDate).getFullYear();
-      const yearB = new Date(b.birthDate).getFullYear();
+      const yearA = parseDate(a.birthDate).getFullYear();
+      const yearB = parseDate(b.birthDate).getFullYear();
       return sortOrder === 'birth-youngest' ? yearB - yearA : yearA - yearB;
     }
     
@@ -481,7 +540,7 @@ export default function AlumniList() {
                           <div className="flex flex-col">
                             <span>{alumni.birthPlace}</span>
                             <span className="text-xs text-slate-500">
-                              {new Date(alumni.birthDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              {formatDisplayDate(alumni.birthDate)}
                             </span>
                           </div>
                         </TableCell>
@@ -641,9 +700,6 @@ export default function AlumniList() {
                       <div className="space-y-1">
                         <div className="flex items-center gap-3">
                           <h3 className="text-2xl font-bold text-slate-900">{selectedAlumni.fullName}</h3>
-                          <code className="text-sm font-mono font-bold bg-blue-600 text-white px-3 py-1 rounded-lg">
-                            {selectedAlumni.uniqueCode}
-                          </code>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           <Badge variant="outline" className="bg-white/50 border-blue-200 text-blue-700">
@@ -660,6 +716,11 @@ export default function AlumniList() {
                           >
                             Alumni {getAlumniCategory(Math.min(...selectedAlumni.educations.map(e => e.graduationYear)))}
                           </Badge>
+                          {selectedAlumni.password && (
+                            <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700 gap-1">
+                              <Lock className="w-3 h-3" /> PW: {selectedAlumni.password}
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -679,8 +740,8 @@ export default function AlumniList() {
                         Informasi Pribadi
                       </h4>
                       <div className="grid grid-cols-1 gap-4">
-                        <DetailItem label="Kode Unik Alumni" value={selectedAlumni.uniqueCode || '-'} icon={<Lock className="w-4 h-4" />} />
-                        <DetailItem label="Tempat, Tanggal Lahir" value={`${selectedAlumni.birthPlace}, ${new Date(selectedAlumni.birthDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`} icon={<Calendar className="w-4 h-4" />} />
+                        <DetailItem label="Password Alumni" value={selectedAlumni.password || '-'} icon={<Lock className="w-4 h-4" />} />
+                        <DetailItem label="Tempat, Tanggal Lahir" value={`${selectedAlumni.birthPlace}, ${formatLongDate(selectedAlumni.birthDate)}`} icon={<Calendar className="w-4 h-4" />} />
                         <DetailItem label="Status Pernikahan" value={selectedAlumni.maritalStatus} icon={<Users className="w-4 h-4" />} />
                         <DetailItem label="Pekerjaan Utama" value={selectedAlumni.mainJob} icon={<Briefcase className="w-4 h-4" />} />
                         {selectedAlumni.jobDetail && (
@@ -688,6 +749,13 @@ export default function AlumniList() {
                         )}
                         {selectedAlumni.workPlace && (
                           <DetailItem label="Tempat Bekerja" value={selectedAlumni.workPlace} icon={<Briefcase className="w-4 h-4" />} />
+                        )}
+                        {selectedAlumni.updatedAt && (
+                          <DetailItem 
+                            label="Tanggal Data Update" 
+                            value={new Date(selectedAlumni.updatedAt).toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })} 
+                            icon={<History className="w-4 h-4" />} 
+                          />
                         )}
                       </div>
                     </div>

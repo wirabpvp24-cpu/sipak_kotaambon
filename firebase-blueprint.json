@@ -81,6 +81,21 @@
         "welcomeText": { "type": "string" },
         "updatedAt": { "type": "string", "format": "date-time" }
       }
+    },
+    "EventResponse": {
+      "title": "Event Response",
+      "description": "Kehadiran dan masukan alumni untuk kegiatan",
+      "type": "object",
+      "properties": {
+        "eventId": { "type": "string" },
+        "alumniId": { "type": "string" },
+        "alumniName": { "type": "string" },
+        "alumniGender": { "type": "string", "enum": ["Laki-laki", "Perempuan"] },
+        "status": { "type": "string", "enum": ["Hadir", "Tidak Hadir"] },
+        "feedback": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["eventId", "alumniId", "alumniName", "alumniGender", "status", "createdAt"]
     }
   },
   "firestore": {
@@ -91,6 +106,10 @@
     "/events/{eventId}": {
       "schema": "Event",
       "description": "Koleksi jadwal kegiatan"
+    },
+    "/event_responses/{responseId}": {
+      "schema": "EventResponse",
+      "description": "Koleksi kehadiran dan masukan alumni"
     },
     "/settings/profile": {
       "schema": "Profile",

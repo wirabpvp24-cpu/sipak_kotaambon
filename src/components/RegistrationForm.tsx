@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Trash2, Save, User, Phone, Mail, MapPin, Briefcase, GraduationCap, Calendar, Loader2, AlertCircle, History, UserCheck, UserPlus, Heart, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Save, User, Phone, Mail, MapPin, Briefcase, GraduationCap, Calendar, Loader2, AlertCircle, History, UserCheck, UserPlus, Heart, Sparkles, Eye, EyeOff, Upload, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -71,6 +71,16 @@ export default function RegistrationForm({
   onCancel?: () => void;
   mode?: 'public' | 'admin';
 }) {
+  const formatToInputDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const [y, m, d] = dateStr.split('-');
+      return `${d}/${m}/${y}`;
+    }
+    return dateStr;
+  };
+
   const [formData, setFormData] = useState<Partial<Alumni>>(() => {
     if (initialData) {
       // Sort educations from lowest to highest level based on EDUCATION_LEVELS order
@@ -84,6 +94,7 @@ export default function RegistrationForm({
         ktbLeader: '',
         isWillingToJoinKTB: false,
         ...initialData,
+        birthDate: formatToInputDate(initialData.birthDate),
         educations: sortedEducations
       };
     }
@@ -111,6 +122,7 @@ export default function RegistrationForm({
       ktbName: '',
       ktbLeader: '',
       isWillingToJoinKTB: false,
+      password: '',
     };
   });
 
@@ -119,13 +131,14 @@ export default function RegistrationForm({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [flowState, setFlowState] = useState<'select' | 'register' | 'verify' | 'update'>(
     mode === 'admin' ? 'register' : 'select'
   );
   const [verificationData, setVerificationData] = useState({ code: '' });
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showVerificationPassword, setShowVerificationPassword] = useState(false);
   const isEdit = !!initialData;
 
   const emptyForm: Partial<Alumni> = {
@@ -152,6 +165,7 @@ export default function RegistrationForm({
     ktbName: '',
     ktbLeader: '',
     isWillingToJoinKTB: false,
+    password: '',
   };
 
   const handleReset = () => {
@@ -159,31 +173,49 @@ export default function RegistrationForm({
     setShowError(false);
     setFlowState('select');
     setVerificationData({ code: '' });
-    setGeneratedCode(null);
   };
 
   const handleVerify = async () => {
     if (!verificationData.code) {
-      setVerificationError("Mohon masukkan Kode Unik Anda.");
+      setVerificationError("Mohon masukkan Password Alumni Anda.");
       return;
     }
 
     setIsVerifying(true);
     setVerificationError(null);
     try {
-      const foundAlumni = await dbService.findAlumniByUniqueCode(verificationData.code.trim());
-
+      // Find alumni by password
+      const foundAlumni = await dbService.findAlumniByPassword(verificationData.code.trim());
+      
       if (foundAlumni) {
-        setFormData(foundAlumni);
+        setFormData({
+          ...foundAlumni,
+          birthDate: formatToInputDate(foundAlumni.birthDate)
+        });
         setFlowState('update');
       } else {
-        setVerificationError("Kode unik tidak ditemukan. Pastikan kode yang Anda masukkan sesuai.");
+        setVerificationError("Password tidak ditemukan. Pastikan data yang Anda masukkan sesuai.");
       }
     } catch (error) {
       setVerificationError("Terjadi kesalahan saat mengecek data.");
     } finally {
       setIsVerifying(false);
     }
+  };
+
+  const handleBirthDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 8) value = value.slice(0, 8);
+    
+    let formatted = value;
+    if (value.length > 2) {
+      formatted = value.slice(0, 2) + '/' + value.slice(2);
+    }
+    if (value.length > 4) {
+      formatted = formatted.slice(0, 5) + '/' + formatted.slice(5);
+    }
+    
+    setFormData({ ...formData, birthDate: formatted });
   };
 
   const RequiredAsterisk = () => <span className="text-red-500 ml-1">*</span>;
@@ -214,11 +246,19 @@ export default function RegistrationForm({
     e.preventDefault();
     
     // Validation check
-    const requiredFields = ['fullName', 'birthPlace', 'birthDate', 'phone', 'email', 'address', 'province', 'city', 'mainJob'];
+    const requiredFields = ['fullName', 'birthPlace', 'birthDate', 'phone', 'email', 'address', 'province', 'city', 'mainJob', 'password'];
     
     const ktbValid = formData.isInKTB 
       ? (!!formData.ktbName && !!formData.ktbLeader)
       : (formData.isWillingToJoinKTB !== undefined && formData.isWillingToJoinKTB !== null);
+
+    // Password validation: 8 chars, alphanumeric + symbols
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+    const isPasswordValid = formData.password && passwordRegex.test(formData.password);
+
+    // BirthDate validation: DD/MM/YYYY
+    const birthDateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+    const isBirthDateValid = formData.birthDate && birthDateRegex.test(formData.birthDate);
 
     const hasEmptyFields = requiredFields.some(field => !formData[field as keyof Alumni]) || 
                           formData.educations?.some(edu => !edu.institution || !edu.major) ||
@@ -227,6 +267,18 @@ export default function RegistrationForm({
 
     if (hasEmptyFields) {
       setShowError(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    if (!isBirthDateValid) {
+      setSubmitError("Format Tanggal Lahir harus DD/MM/YYYY (Contoh: 31/12/1990).");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    if (!isPasswordValid) {
+      setSubmitError("Password harus minimal 8 karakter dan kombinasi angka, huruf, serta simbol.");
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -268,8 +320,7 @@ export default function RegistrationForm({
           return;
         }
 
-        const code = await dbService.addAlumni(cleanedData as Alumni);
-        setGeneratedCode(code);
+        await dbService.addAlumni(cleanedData as Alumni);
         setIsSuccess(true);
         setFormData(emptyForm);
       }
@@ -350,11 +401,15 @@ export default function RegistrationForm({
             <Label htmlFor="birthDate">Tanggal Lahir <RequiredAsterisk /></Label>
             <Input 
               id="birthDate" 
-              type="date" 
+              type="text" 
               required 
               value={formData.birthDate} 
-              onChange={e => setFormData({...formData, birthDate: e.target.value})}
+              onChange={handleBirthDateChange}
+              placeholder="DD/MM/YYYY"
+              className="block"
+              maxLength={10}
             />
+            <p className="text-[10px] text-slate-400 italic">Format: Tanggal/Bulan/Tahun (Contoh: 31/12/1990)</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="phone">Nomor Handphone <RequiredAsterisk /></Label>
@@ -393,6 +448,32 @@ export default function RegistrationForm({
                 <SelectItem value="Duda/Janda">Duda/Janda</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password Alumni <RequiredAsterisk /></Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+              <Input 
+                id="password" 
+                type={showPassword ? "text" : "password"}
+                required 
+                value={formData.password || ''} 
+                onChange={e => setFormData({...formData, password: e.target.value})}
+                placeholder="Min. 8 karakter (Huruf, Angka, Simbol)"
+                className="pl-10 pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 focus:outline-none"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            <p className="text-[10px] text-slate-400 italic">
+              *Password ini akan digunakan untuk memperbarui data Anda di masa mendatang. 
+              Contoh: <span className="font-mono font-bold text-slate-500">Alumni2024!</span>
+            </p>
           </div>
         </div>
       </div>
@@ -816,14 +897,14 @@ export default function RegistrationForm({
                   </p>
                 </div>
 
-                {generatedCode && (
+                {formData.password && (
                   <div className="bg-blue-50 border-2 border-blue-100 p-6 rounded-2xl max-w-sm mx-auto space-y-3">
-                    <p className="text-xs font-bold text-blue-600 uppercase tracking-widest">Kode Unik Anda</p>
+                    <p className="text-xs font-bold text-blue-600 uppercase tracking-widest">Password Alumni Anda</p>
                     <div className="text-3xl font-mono font-bold text-blue-900 tracking-wider">
-                      {generatedCode}
+                      {formData.password}
                     </div>
                     <p className="text-xs text-blue-500 italic">
-                      *Simpan kode ini untuk melakukan pembaruan data di masa mendatang.
+                      *Simpan password ini untuk melakukan pembaruan data di masa mendatang.
                     </p>
                   </div>
                 )}
@@ -833,7 +914,6 @@ export default function RegistrationForm({
                   onClick={() => {
                     setIsSuccess(false);
                     setFlowState(mode === 'admin' ? 'register' : 'select');
-                    setGeneratedCode(null);
                   }}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
@@ -888,7 +968,7 @@ export default function RegistrationForm({
             >
               <div className="text-center space-y-2">
                 <h3 className="text-xl font-bold text-slate-900">Verifikasi Data Alumni</h3>
-                <p className="text-sm text-slate-500">Masukkan Kode Unik yang Anda dapatkan saat mendaftar</p>
+                <p className="text-sm text-slate-500">Masukkan Password Alumni yang Anda tentukan saat mendaftar</p>
               </div>
 
               {verificationError && (
@@ -900,14 +980,26 @@ export default function RegistrationForm({
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Kode Unik Alumni</Label>
-                  <Input 
-                    placeholder="Contoh: PAK000123Feb91"
-                    value={verificationData.code}
-                    onChange={e => setVerificationData({...verificationData, code: e.target.value})}
-                  />
+                  <Label>Password Alumni</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                    <Input 
+                      type={showVerificationPassword ? "text" : "password"}
+                      placeholder="Masukkan password Anda"
+                      className="pl-10 pr-10"
+                      value={verificationData.code}
+                      onChange={e => setVerificationData({...verificationData, code: e.target.value})}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowVerificationPassword(!showVerificationPassword)}
+                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 focus:outline-none"
+                    >
+                      {showVerificationPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   <p className="text-[10px] text-slate-400 italic">
-                    Keterangan: PAK + 4 digit nomor urut + tanggal bulan tahun kelahiran (Contoh: PAK000123Feb91)
+                    *Gunakan password yang Anda buat saat pertama kali mendaftar.
                   </p>
                 </div>
                 <div className="flex gap-3 pt-2">
@@ -1008,6 +1100,18 @@ export default function RegistrationForm({
                 <span className="text-slate-400 block">Pekerjaan</span>
                 <span className="font-medium text-slate-900">{formData.mainJob} {formData.jobDetail ? `(${formData.jobDetail})` : ''}</span>
               </div>
+              <div className="space-y-1">
+                <span className="text-slate-400 block">Password Alumni</span>
+                <span className="font-medium text-blue-600 font-mono">{formData.password}</span>
+              </div>
+              {formData.updatedAt && (
+                <div className="space-y-1">
+                  <span className="text-slate-400 block">Tanggal Data Update</span>
+                  <span className="font-medium text-slate-900">
+                    {new Date(formData.updatedAt).toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              )}
               <div className="space-y-1 sm:col-span-2">
                 <span className="text-slate-400 block">Alamat Domisili</span>
                 <span className="font-medium text-slate-900">{formData.address}, {formData.city}, {formData.province}</span>

@@ -1,4 +1,4 @@
-import { Alumni, Event, OrgProfile, HomeSettings } from '../types';
+import { Alumni, Event, OrgProfile, HomeSettings, EventResponse } from '../types';
 import { db, auth } from './firebase';
 import { 
   collection, 
@@ -93,41 +93,24 @@ export const dbService = {
     }
   },
   
-  async addAlumni(alumni: Omit<Alumni, 'id' | 'uniqueCode'>): Promise<string> {
+  async addAlumni(alumni: Omit<Alumni, 'id'>): Promise<void> {
     try {
       const alumniRef = collection(db, COLLECTION_NAME);
-      const snapshot = await getCountFromServer(alumniRef);
-      const count = snapshot.data().count + 1;
       
-      // Generate Unique Code: PAK + 4 digit seq + day + month + year
-      // Example: PAK000123Feb91
-      const birthDate = alumni.birthDate || '1990-01-01';
-      const [y, m, d] = birthDate.split('-');
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const monthIndex = parseInt(m, 10) - 1;
-      const monthName = months[monthIndex] || 'Jan';
-      const yearShort = y ? y.slice(-2) : '90';
-      const dayPadded = d ? d.padStart(2, '0') : '01';
-      const seq = count.toString().padStart(4, '0');
-      const uniqueCode = `PAK${seq}${dayPadded}${monthName}${yearShort}`;
-
       await addDoc(alumniRef, {
         ...alumni,
-        uniqueCode,
         createdAt: serverTimestamp(),
       });
-      
-      return uniqueCode;
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, COLLECTION_NAME);
       throw error;
     }
   },
 
-  async findAlumniByUniqueCode(code: string): Promise<Alumni | null> {
+  async findAlumniByPassword(password: string): Promise<Alumni | null> {
     try {
       const alumniRef = collection(db, COLLECTION_NAME);
-      const q = query(alumniRef, where("uniqueCode", "==", code));
+      const q = query(alumniRef, where("password", "==", password));
       const querySnapshot = await getDocs(q);
       
       if (!querySnapshot.empty) {
@@ -446,41 +429,68 @@ export const dbService = {
     });
   },
 
-  async syncDatabase(): Promise<{ updated: number, total: number }> {
+  // Event Response methods
+  async addEventResponse(response: Omit<EventResponse, 'id'>): Promise<void> {
     try {
-      const alumniRef = collection(db, COLLECTION_NAME);
-      const q = query(alumniRef, orderBy('createdAt', 'asc'));
-      const snapshot = await getDocs(q);
-      const alumniList = snapshot.docs;
-      let updatedCount = 0;
-
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-      for (let i = 0; i < alumniList.length; i++) {
-        const alumniDoc = alumniList[i];
-        const data = alumniDoc.data();
-        
-        if (!data.uniqueCode) {
-          const birthDate = data.birthDate || '1990-01-01';
-          const [y, m, d] = birthDate.split('-');
-          const monthName = months[parseInt(m) - 1] || 'Jan';
-          const yearShort = y ? y.slice(-2) : '90';
-          const dayPadded = d ? d.padStart(2, '0') : '01';
-          const seq = (i + 1).toString().padStart(4, '0');
-          const uniqueCode = `PAK${seq}${dayPadded}${monthName}${yearShort}`;
-
-          await updateDoc(alumniDoc.ref, {
-            uniqueCode,
-            updatedAt: serverTimestamp()
-          });
-          updatedCount++;
-        }
-      }
-
-      return { updated: updatedCount, total: alumniList.length };
+      await addDoc(collection(db, 'event_responses'), {
+        ...response,
+        createdAt: serverTimestamp(),
+      });
     } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, COLLECTION_NAME);
-      throw error;
+      handleFirestoreError(error, OperationType.CREATE, 'event_responses');
     }
+  },
+
+  async getEventResponses(eventId: string): Promise<EventResponse[]> {
+    try {
+      const q = query(collection(db, 'event_responses'), where('eventId', '==', eventId), orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt,
+        } as unknown as EventResponse;
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.LIST, 'event_responses');
+      return [];
+    }
+  },
+
+  async getAllEventResponses(): Promise<EventResponse[]> {
+    try {
+      const q = query(collection(db, 'event_responses'), orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt,
+        } as unknown as EventResponse;
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.LIST, 'event_responses');
+      return [];
+    }
+  },
+
+  subscribeEventResponses(eventId: string, callback: (responses: EventResponse[]) => void) {
+    const q = query(collection(db, 'event_responses'), where('eventId', '==', eventId), orderBy('createdAt', 'desc'));
+    return onSnapshot(q, (snapshot) => {
+      const responses = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt,
+        } as unknown as EventResponse;
+      });
+      callback(responses);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'event_responses');
+    });
   }
 };

@@ -38,8 +38,9 @@ export interface Alumni {
   ktbName?: string;
   ktbLeader?: string;
   isWillingToJoinKTB?: boolean;
-  uniqueCode?: string;
+  password?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface Event {
@@ -55,6 +56,21 @@ export interface Event {
   imageUrl?: string;
   createdAt: string;
   updatedAt?: string;
+  // Manual attendance overrides
+  manualAttendanceEnabled?: boolean;
+  manualMaleCount?: number;
+  manualFemaleCount?: number;
+}
+
+export interface EventResponse {
+  id?: string;
+  eventId: string;
+  alumniId: string;
+  alumniName: string;
+  alumniGender: Gender;
+  status: 'Hadir' | 'Tidak Hadir';
+  feedback?: string;
+  createdAt: string;
 }
 
 export interface OrgProfile {
@@ -77,7 +93,7 @@ export function getAlumniCategory(firstGraduationYear: number): AlumniCategory {
   const currentYear = new Date().getFullYear();
   const yearsSinceGraduation = currentYear - firstGraduationYear;
   
-  if (yearsSinceGraduation >= 15) return 'Senior';
+  if (yearsSinceGraduation > 15) return 'Senior';
   if (yearsSinceGraduation >= 5) return 'Madya';
   return 'Junior';
 }

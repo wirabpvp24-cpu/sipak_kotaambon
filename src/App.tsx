@@ -169,17 +169,15 @@ export default function App() {
               <span className="hidden sm:inline">Info Kegiatan</span>
             </Button>
 
-            {!isAdmin && (
-              <Button 
-                variant={activeTab === 'register' ? 'default' : 'ghost'} 
-                size="sm"
-                onClick={() => setActiveTab('register')}
-                className="gap-2"
-              >
-                <UserPlus className="w-4 h-4" />
-                <span className="hidden sm:inline">Pendaftaran</span>
-              </Button>
-            )}
+            <Button 
+              variant={activeTab === 'register' ? 'default' : 'ghost'} 
+              size="sm"
+              onClick={() => setActiveTab('register')}
+              className="gap-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span className="hidden sm:inline">Pendaftaran</span>
+            </Button>
 
             {!isAdmin && (
               <Button 

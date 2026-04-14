@@ -1,23 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, Plus, Trash2, Edit2, Save, X, Loader2, CalendarDays } from 'lucide-react';
+import { Calendar, Clock, MapPin, Plus, Trash2, Edit2, Save, X, Loader2, CalendarDays, Upload, Image as ImageIcon, CheckCircle, BarChart3 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { dbService } from '@/lib/db';
 import { Event } from '@/types';
 import { cn } from '@/lib/utils';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import EventAttendanceDialog from './EventAttendanceDialog';
+import EventStatsDialog from './EventStatsDialog';
 
 export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }) {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isCustomTitle, setIsCustomTitle] = useState(false);
+  const [customTitle, setCustomTitle] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [selectedEventForAttendance, setSelectedEventForAttendance] = useState<Event | null>(null);
+  const [selectedEventForStats, setSelectedEventForStats] = useState<Event | null>(null);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [filterStatus, setFilterStatus] = useState<'all' | 'upcoming'>('all');
   const [formData, setFormData] = useState<Omit<Event, 'id' | 'createdAt'>>({
     title: '',
     theme: '',
@@ -27,7 +38,10 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
     time: '',
     timezone: 'WIT',
     location: '',
-    imageUrl: ''
+    imageUrl: '',
+    manualAttendanceEnabled: false,
+    manualMaleCount: 0,
+    manualFemaleCount: 0
   });
 
   useEffect(() => {
@@ -41,6 +55,46 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleTitleSelect = (value: string) => {
+    if (value === 'Lainnya') {
+      setIsCustomTitle(true);
+      setFormData(prev => ({ ...prev, title: '' }));
+    } else {
+      setIsCustomTitle(false);
+      setFormData(prev => ({ ...prev, title: value }));
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Mohon pilih file gambar.');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Ukuran file maksimal 2MB.');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const storageRef = ref(storage, `event-flyers/${Date.now()}_${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      setFormData(prev => ({ ...prev, imageUrl: downloadURL }));
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert('Gagal mengunggah gambar. Silakan coba lagi.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,7 +117,10 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
         time: '', 
         timezone: 'WIT',
         location: '', 
-        imageUrl: '' 
+        imageUrl: '',
+        manualAttendanceEnabled: false,
+        manualMaleCount: 0,
+        manualFemaleCount: 0
       });
     } catch (error) {
       console.error("Error saving event:", error);
@@ -83,7 +140,10 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
       time: event.time,
       timezone: event.timezone || 'WIT',
       location: event.location,
-      imageUrl: event.imageUrl || ''
+      imageUrl: event.imageUrl || '',
+      manualAttendanceEnabled: event.manualAttendanceEnabled || false,
+      manualMaleCount: event.manualMaleCount || 0,
+      manualFemaleCount: event.manualFemaleCount || 0
     });
     setIsAdding(false);
     // Scroll to top to see the form
@@ -113,7 +173,19 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
   const groupedEvents = months.reduce((acc, month, index) => {
     acc[month] = events.filter(event => {
       const d = new Date(event.date);
-      return d.getFullYear() === selectedYear && d.getMonth() === index;
+      const isYearMatch = d.getFullYear() === selectedYear && d.getMonth() === index;
+      
+      if (!isYearMatch) return false;
+      
+      if (filterStatus === 'upcoming') {
+        const now = new Date();
+        const eventDateTime = new Date(`${event.date}T${event.time}:00`);
+        const eightHoursLater = new Date(eventDateTime.getTime() + 8 * 60 * 60 * 1000);
+        // Upcoming or Ongoing (within 8 hours window)
+        return eventDateTime >= now || (now >= eventDateTime && now <= eightHoursLater);
+      }
+      
+      return true;
     }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     return acc;
   }, {} as Record<string, Event[]>);
@@ -131,6 +203,17 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
           </div>
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-1 shadow-sm">
+            <span className="text-sm font-medium text-slate-500">Filter:</span>
+            <select 
+              value={filterStatus} 
+              onChange={(e) => setFilterStatus(e.target.value as any)}
+              className="bg-transparent border-none text-sm font-bold text-slate-900 focus:ring-0 cursor-pointer"
+            >
+              <option value="all">Semua</option>
+              <option value="upcoming">Akan Datang/Berlangsung</option>
+            </select>
+          </div>
           <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-1 shadow-sm">
             <span className="text-sm font-medium text-slate-500">Tahun:</span>
             <select 
@@ -162,7 +245,41 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="title">Judul Kegiatan</Label>
-                  <Input id="title" name="title" value={formData.title} onChange={handleInputChange} required placeholder="Contoh: Ibadah Bulanan Alumni" disabled={isSaving} />
+                  {!isCustomTitle ? (
+                    <Select value={formData.title} onValueChange={handleTitleSelect}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih Judul Kegiatan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Ibadah Persekutuan Umum">Ibadah Persekutuan Umum</SelectItem>
+                        <SelectItem value="Ibadah Alumni Senior">Ibadah Alumni Senior</SelectItem>
+                        <SelectItem value="Lainnya">Lainnya (Input Manual)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input 
+                        id="title" 
+                        name="title" 
+                        value={formData.title} 
+                        onChange={handleInputChange} 
+                        required 
+                        placeholder="Input judul kegiatan manual" 
+                        disabled={isSaving} 
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          setIsCustomTitle(false);
+                          setFormData(prev => ({ ...prev, title: '' }));
+                        }}
+                      >
+                        Batal
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="theme">Tema Kegiatan (Opsional)</Label>
@@ -211,15 +328,118 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
                   </select>
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="imageUrl">URL Gambar Flyer (Opsional)</Label>
-                  <Input id="imageUrl" name="imageUrl" value={formData.imageUrl} onChange={handleInputChange} placeholder="https://example.com/flyer.jpg" disabled={isSaving} />
-                  <p className="text-[10px] text-slate-400 italic">Masukkan link gambar flyer kegiatan Anda.</p>
+                  <Label>Flyer Kegiatan (Upload Gambar)</Label>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="relative flex-1">
+                        <Input 
+                          id="imageUpload" 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleImageUpload} 
+                          disabled={isSaving || isUploading}
+                          className="hidden"
+                        />
+                        <Label 
+                          htmlFor="imageUpload" 
+                          className={cn(
+                            "flex items-center justify-center gap-2 h-10 px-4 rounded-md border border-dashed border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors",
+                            (isSaving || isUploading) && "opacity-50 cursor-not-allowed"
+                          )}
+                        >
+                          {isUploading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Upload className="w-4 h-4" />
+                          )}
+                          {isUploading ? 'Mengunggah...' : 'Pilih File Gambar'}
+                        </Label>
+                      </div>
+                      {formData.imageUrl && (
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
+                          className="text-red-600 border-red-200 hover:bg-red-50"
+                          disabled={isSaving || isUploading}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" /> Hapus
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {formData.imageUrl && (
+                      <div className="relative w-full max-w-xs rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                        <img 
+                          src={formData.imageUrl} 
+                          alt="Preview Flyer" 
+                          className="w-full h-auto object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="imageUrl" className="text-xs text-slate-500">Atau masukkan URL Gambar</Label>
+                      <Input 
+                        id="imageUrl" 
+                        name="imageUrl" 
+                        value={formData.imageUrl} 
+                        onChange={handleInputChange} 
+                        placeholder="https://example.com/flyer.jpg" 
+                        disabled={isSaving || isUploading} 
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-400 italic">Disarankan ukuran gambar maksimal 2MB untuk performa terbaik.</p>
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="description">Keterangan (Opsional)</Label>
                 <Textarea id="description" name="description" value={formData.description} onChange={handleInputChange} placeholder="Tambahkan detail tambahan..." className="resize-none h-24" disabled={isSaving} />
               </div>
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="manualAttendanceEnabled"
+                    checked={formData.manualAttendanceEnabled}
+                    onChange={(e) => setFormData(prev => ({ ...prev, manualAttendanceEnabled: e.target.checked }))}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <Label htmlFor="manualAttendanceEnabled" className="font-bold text-blue-700">Input Kehadiran Manual (Override Grafik Dashboard)</Label>
+                </div>
+                
+                {formData.manualAttendanceEnabled && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-blue-50 rounded-lg border border-blue-100 animate-in fade-in duration-300">
+                    <div className="space-y-2">
+                      <Label htmlFor="manualMaleCount">Jumlah Laki-laki</Label>
+                      <Input 
+                        id="manualMaleCount" 
+                        type="number" 
+                        value={formData.manualMaleCount} 
+                        onChange={(e) => setFormData(prev => ({ ...prev, manualMaleCount: parseInt(e.target.value) || 0 }))}
+                        min="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="manualFemaleCount">Jumlah Perempuan</Label>
+                      <Input 
+                        id="manualFemaleCount" 
+                        type="number" 
+                        value={formData.manualFemaleCount} 
+                        onChange={(e) => setFormData(prev => ({ ...prev, manualFemaleCount: parseInt(e.target.value) || 0 }))}
+                        min="0"
+                      />
+                    </div>
+                    <p className="md:col-span-2 text-xs text-blue-600 italic">
+                      * Jika diaktifkan, data ini akan digunakan di Dashboard menggantikan data konfirmasi kehadiran otomatis.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="ghost" onClick={() => { setIsAdding(false); setEditingId(null); }} disabled={isSaving}>Batal</Button>
                 <Button type="submit" className="bg-blue-600 hover:bg-blue-700 gap-2 min-w-[140px]" disabled={isSaving}>
@@ -262,15 +482,27 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
                     const eventDate = new Date(event.date);
                     const isToday = new Date().toDateString() === eventDate.toDateString();
                     
+                    // Check if event is finished
+                    const now = new Date();
+                    const eventDateTime = new Date(`${event.date}T${event.time}:00`);
+                    const eightHoursLater = new Date(eventDateTime.getTime() + 8 * 60 * 60 * 1000);
+                    const isFinished = now > eightHoursLater;
+                    const isOngoing = now >= eventDateTime && now <= eightHoursLater;
+                    const isUpcoming = now < eventDateTime;
+                    
                     return (
                       <Card key={event.id} className={cn(
                         "group transition-all hover:shadow-md border-slate-100",
-                        isToday && "border-blue-200 bg-blue-50/30"
+                        isToday && "border-blue-200 bg-blue-50/30",
+                        isFinished && "opacity-75"
                       )}>
                         <CardContent className="p-5">
                           <div className="flex flex-col md:flex-row justify-between gap-4">
                             <div className="flex gap-4">
-                              <div className="flex flex-col items-center justify-center w-16 h-16 bg-white border border-slate-200 rounded-xl shrink-0 shadow-sm">
+                              <div className={cn(
+                                "flex flex-col items-center justify-center w-16 h-16 bg-white border border-slate-200 rounded-xl shrink-0 shadow-sm",
+                                isFinished && "grayscale"
+                              )}>
                                 <span className="text-[10px] font-bold text-slate-400 uppercase">
                                   {eventDate.toLocaleDateString('id-ID', { month: 'short' })}
                                 </span>
@@ -279,9 +511,16 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
                                 </span>
                               </div>
                               <div className="space-y-1">
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                   <h3 className="font-bold text-slate-900 text-lg">{event.title}</h3>
                                   {isToday && <Badge className="bg-blue-600">Hari Ini</Badge>}
+                                  {isFinished ? (
+                                    <Badge variant="outline" className="bg-red-50 text-red-600 border-red-100">Telah Selesai</Badge>
+                                  ) : isOngoing ? (
+                                    <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-100">Sedang Berlangsung</Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-100">Akan Datang</Badge>
+                                  )}
                                 </div>
                                 {event.theme && (
                                   <p className="text-sm font-semibold text-blue-600">Tema: {event.theme}</p>
@@ -310,6 +549,40 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
                                     />
                                   </div>
                                 )}
+
+                                <div className="mt-6 flex flex-col items-start gap-2">
+                                  {!isAdmin && (
+                                    <>
+                                      <Button 
+                                        size="sm" 
+                                        className="bg-blue-600 hover:bg-blue-700 gap-2 w-fit"
+                                        onClick={() => setSelectedEventForAttendance(event)}
+                                        disabled={!isOngoing}
+                                      >
+                                        <CheckCircle className="w-4 h-4" />
+                                        Konfirmasi Kehadiran
+                                      </Button>
+                                      {!isOngoing && (
+                                        <p className="text-[10px] text-slate-500 italic">
+                                          {isUpcoming 
+                                            ? "* Konfirmasi dibuka saat acara dimulai" 
+                                            : "* Konfirmasi sudah ditutup (maks 8 jam setelah mulai)"}
+                                        </p>
+                                      )}
+                                    </>
+                                  )}
+                                  {isAdmin && (
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-2 w-fit"
+                                      onClick={() => setSelectedEventForStats(event)}
+                                    >
+                                      <BarChart3 className="w-4 h-4" />
+                                      Statistik & Masukan
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             {isAdmin && (
@@ -352,6 +625,22 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
           </div>
         )}
       </div>
+
+      {selectedEventForAttendance && (
+        <EventAttendanceDialog 
+          isOpen={!!selectedEventForAttendance}
+          onClose={() => setSelectedEventForAttendance(null)}
+          event={selectedEventForAttendance}
+        />
+      )}
+
+      {selectedEventForStats && (
+        <EventStatsDialog 
+          isOpen={!!selectedEventForStats}
+          onClose={() => setSelectedEventForStats(null)}
+          event={selectedEventForStats}
+        />
+      )}
     </div>
   );
 }

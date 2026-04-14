@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap, AlertCircle, Loader2, User, Lock, ArrowRight } from 'lucide-react';
+import { GraduationCap, AlertCircle, Loader2, User, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from './ui/card';
 import { Alert, AlertDescription } from "./ui/alert";
@@ -13,6 +13,7 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
   const [isLoading, setIsLoading] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleGoogleLogin = async () => {
     setError('');
@@ -181,13 +182,20 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input 
                     id="password" 
-                    type="password" 
+                    type={showPassword ? "text" : "password"} 
                     placeholder="••••••••" 
-                    className="pl-10"
+                    className="pl-10 pr-10"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 focus:outline-none"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
               <Button 

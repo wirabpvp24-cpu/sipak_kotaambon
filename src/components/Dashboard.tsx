@@ -4,29 +4,39 @@ import { Users, GraduationCap, Award, UserCheck, UserPlus, PieChart as PieChartI
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Alumni, getAlumniCategory } from '@/types';
+import { Badge } from '@/components/ui/badge';
+import { Alumni, getAlumniCategory, EventResponse, Event } from '@/types';
 import { dbService } from '@/lib/db';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line
 } from 'recharts';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6366f1'];
 
 export default function Dashboard() {
   const [alumniList, setAlumniList] = useState<Alumni[]>([]);
+  const [eventResponses, setEventResponses] = useState<EventResponse[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [majorLevelFilter, setMajorLevelFilter] = useState<string>('S1');
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
 
   useEffect(() => {
     const fetchData = async () => {
-      const data = await dbService.getAlumni();
-      setAlumniList(data);
+      const [alumniData, responsesData, eventsData] = await Promise.all([
+        dbService.getAlumni(),
+        dbService.getAllEventResponses(),
+        dbService.getEvents()
+      ]);
+      setAlumniList(alumniData);
+      setEventResponses(responsesData);
+      setEvents(eventsData);
       setLoading(false);
     };
     fetchData();
@@ -152,6 +162,120 @@ export default function Dashboard() {
     { name: 'Bersedia Gabung', value: willingToJoinKTBCount },
     { name: 'Tidak Bersedia', value: notInKTBCount - willingToJoinKTBCount }
   ];
+
+  // Line Chart Data: Monthly Attendance by Event Type
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  const eventTypes = Array.from(new Set(events.map(e => e.title)));
+  
+  const lineChartData = months.map((month, index) => {
+    const data: any = { month };
+    eventTypes.forEach(type => {
+      const typeEvents = events.filter(e => {
+        const d = new Date(e.date);
+        return e.title === type && d.getMonth() === index && d.getFullYear().toString() === selectedYear;
+      });
+      
+      const attendanceCount = typeEvents.reduce((sum, event) => {
+        if (event.manualAttendanceEnabled) {
+          return sum + (event.manualMaleCount || 0) + (event.manualFemaleCount || 0);
+        }
+        return sum + eventResponses.filter(r => r.eventId === event.id && r.status === 'Hadir').length;
+      }, 0);
+      
+      data[type as string] = attendanceCount;
+    });
+    return data;
+  });
+
+  const availableYears = Array.from(new Set(events.map(e => new Date(e.date).getFullYear().toString()))).sort((a, b) => (b as string).localeCompare(a as string));
+  if (availableYears.length === 0) availableYears.push(new Date().getFullYear().toString());
+  if (!availableYears.includes(new Date().getFullYear().toString())) availableYears.push(new Date().getFullYear().toString());
+
+  // Event Stats
+  const relevantEvents = events.filter(e => 
+    eventResponses.some(r => r.eventId === e.id) || e.manualAttendanceEnabled
+  );
+  const totalRelevantEvents = relevantEvents.length || 1;
+  
+  let totalAttendees = 0;
+  let maleAttendees = 0;
+  let femaleAttendees = 0;
+  
+  relevantEvents.forEach(e => {
+    if (e.manualAttendanceEnabled) {
+      totalAttendees += (e.manualMaleCount || 0) + (e.manualFemaleCount || 0);
+      maleAttendees += (e.manualMaleCount || 0);
+      femaleAttendees += (e.manualFemaleCount || 0);
+    } else {
+      const responses = eventResponses.filter(r => r.eventId === e.id && r.status === 'Hadir');
+      totalAttendees += responses.length;
+      maleAttendees += responses.filter(r => r.alumniGender === 'Laki-laki').length;
+      femaleAttendees += responses.filter(r => r.alumniGender === 'Perempuan').length;
+    }
+  });
+
+  const avgAttendance = totalAttendees / totalRelevantEvents;
+  const avgMaleAttendance = maleAttendees / totalRelevantEvents;
+  const avgFemaleAttendance = femaleAttendees / totalRelevantEvents;
+
+  const attendanceTrendData = relevantEvents
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .map(event => {
+      if (event.manualAttendanceEnabled) {
+        return {
+          name: event.title.length > 15 ? event.title.substring(0, 15) + '...' : event.title,
+          fullTitle: event.title,
+          date: event.date,
+          total: (event.manualMaleCount || 0) + (event.manualFemaleCount || 0),
+          male: event.manualMaleCount || 0,
+          female: event.manualFemaleCount || 0
+        };
+      }
+      const responses = eventResponses.filter(r => r.eventId === event.id && r.status === 'Hadir');
+      return {
+        name: event.title.length > 15 ? event.title.substring(0, 15) + '...' : event.title,
+        fullTitle: event.title,
+        date: event.date,
+        total: responses.length,
+        male: responses.filter(r => r.alumniGender === 'Laki-laki').length,
+        female: responses.filter(r => r.alumniGender === 'Perempuan').length
+      };
+    });
+
+  // Monthly Average by Event Type
+  const monthlyAvgByType = eventTypes.map(type => {
+    const typeEvents = events.filter(e => e.title === type);
+    const typeResponses = eventResponses.filter(r => {
+      const event = events.find(e => e.id === r.eventId);
+      return event?.title === type && r.status === 'Hadir';
+    });
+    
+    // Group by month-year
+    const monthlyGroups: Record<string, number> = {};
+    typeEvents.forEach(e => {
+      const date = new Date(e.date);
+      const monthYear = `${date.getMonth()}-${date.getFullYear()}`;
+      if (!monthlyGroups[monthYear]) monthlyGroups[monthYear] = 0;
+      
+      let count = 0;
+      if (e.manualAttendanceEnabled) {
+        count = (e.manualMaleCount || 0) + (e.manualFemaleCount || 0);
+      } else {
+        count = eventResponses.filter(r => r.eventId === e.id && r.status === 'Hadir').length;
+      }
+      monthlyGroups[monthYear] += count;
+    });
+
+    const monthsCount = Object.keys(monthlyGroups).length || 1;
+    const totalAttendance = Object.values(monthlyGroups).reduce((a, b) => a + b, 0);
+
+    return {
+      type,
+      avg: totalAttendance / monthsCount,
+      total: totalAttendance,
+      count: typeEvents.length
+    };
+  }).sort((a, b) => b.avg - a.avg);
 
   const majorData = Object.entries(majorStats)
     .map(([name, value]) => ({ name, value: value as number }))
@@ -756,6 +880,75 @@ export default function Dashboard() {
                 <Tooltip />
                 <Legend />
               </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Event Attendance Trends Section */}
+      <div className="space-y-6 pt-8 border-t border-slate-200">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">Statistik Kegiatan</h2>
+            <p className="text-slate-500">Tren kehadiran alumni berdasarkan jenis kegiatan per bulan</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-400 uppercase">Tahun:</span>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-[100px] h-8 text-xs">
+                <SelectValue placeholder="Tahun" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableYears.map(year => (
+                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <Card className="shadow-md border-slate-100">
+          <CardHeader>
+            <CardTitle className="text-lg">Grafik Tren Kehadiran {selectedYear}</CardTitle>
+            <CardDescription>Perbandingan jumlah kehadiran antar jenis kegiatan (Januari - Desember)</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[450px] pt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={lineChartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="month" 
+                  tick={{ fontSize: 12, fill: '#64748b' }} 
+                  axisLine={{ stroke: '#e2e8f0' }}
+                  tickLine={false}
+                />
+                <YAxis 
+                  tick={{ fontSize: 12, fill: '#64748b' }} 
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    borderRadius: '12px', 
+                    border: 'none', 
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    padding: '12px'
+                  }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                {eventTypes.map((type, index) => (
+                  <Line 
+                    key={type as string} 
+                    type="monotone" 
+                    dataKey={type as string} 
+                    stroke={COLORS[index % COLORS.length]} 
+                    strokeWidth={3}
+                    dot={{ r: 4, strokeWidth: 2, fill: '#fff' }}
+                    activeDot={{ r: 6, strokeWidth: 0 }}
+                    animationDuration={1500}
+                  />
+                ))}
+              </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>

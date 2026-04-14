@@ -24,6 +24,7 @@ service cloud.firestore {
     //   - address: string
     //   - province: string
     //   - city: string
+    //   - password: string
     //   - createdAt: timestamp
     //
     // ===============================================================
@@ -55,7 +56,7 @@ service cloud.firestore {
              data.get('serviceInterests', []) is list &&
              data.get('isInKTB', false) is bool &&
              (!('isWillingToJoinKTB' in data) || data.isWillingToJoinKTB is bool) &&
-             (!('uniqueCode' in data) || (data.uniqueCode is string && data.uniqueCode.size() < 50));
+             (!('password' in data) || (data.password is string && data.password.size() >= 8 && data.password.size() < 100));
     }
 
     function isValidEvent(data) {
@@ -64,6 +65,15 @@ service cloud.firestore {
              data.get('time', '') is string &&
              data.get('timezone', '') is string && data.get('timezone', '') in ['WIB', 'WITA', 'WIT'] &&
              data.get('location', '') is string;
+    }
+
+    function isValidEventResponse(data) {
+      return data.get('eventId', '') is string &&
+             data.get('alumniId', '') is string &&
+             data.get('alumniName', '') is string &&
+             data.get('alumniGender', '') in ['Laki-laki', 'Perempuan'] &&
+             data.get('status', '') in ['Hadir', 'Tidak Hadir'] &&
+             (!('feedback' in data) || (data.feedback is string && data.feedback.size() < 1000));
     }
 
     match /alumni/{alumniId} {
@@ -78,6 +88,12 @@ service cloud.firestore {
       allow read: if true;
       allow create, update: if isAdmin() && isValidEvent(request.resource.data);
       allow delete: if isAdmin();
+    }
+
+    match /event_responses/{responseId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated() && isValidEventResponse(request.resource.data);
+      allow update, delete: if isAdmin();
     }
     
     match /settings/{docId} {
