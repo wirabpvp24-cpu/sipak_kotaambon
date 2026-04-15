@@ -79,7 +79,7 @@ export default function AdminSuggestions() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-biru-abu border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -132,7 +132,7 @@ export default function AdminSuggestions() {
           </Card>
         ) : (
           filteredSuggestions.map((suggestion) => (
-            <Card key={suggestion.id} className={`transition-all hover:shadow-md ${!suggestion.isRead ? 'border-l-4 border-l-blue-600 bg-blue-50/30' : ''}`}>
+            <Card key={suggestion.id} className={`transition-all hover:shadow-md ${!suggestion.isRead ? 'border-l-4 border-l-biru-abu bg-abu-muda/30' : ''}`}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
@@ -142,7 +142,7 @@ export default function AdminSuggestions() {
                         {suggestion.fullName}
                       </CardTitle>
                       {!suggestion.isRead && (
-                        <Badge variant="default" className="bg-blue-600">Baru</Badge>
+                        <Badge variant="default" className="bg-biru-abu">Baru</Badge>
                       )}
                       <Badge variant="outline" className={suggestion.isAlumni === 'Ya' ? 'text-green-600 border-green-200 bg-green-50' : 'text-slate-500'}>
                         {suggestion.isAlumni === 'Ya' ? 'Alumni' : 'Bukan Alumni'}
@@ -158,7 +158,7 @@ export default function AdminSuggestions() {
                         {suggestion.phone}
                       </span>
                       {suggestion.perkantasOrigin && (
-                        <span className="flex items-center gap-1 text-blue-600 font-medium">
+                        <span className="flex items-center gap-1 text-biru-abu font-medium">
                           <MapPin className="w-3 h-3" />
                           {suggestion.perkantasOrigin}
                         </span>
@@ -174,7 +174,7 @@ export default function AdminSuggestions() {
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        className="text-biru-abu hover:text-biru-abu/90 hover:bg-abu-muda"
                         onClick={() => markAsRead(suggestion.id)}
                       >
                         <CheckCircle2 className="w-4 h-4 mr-1" />

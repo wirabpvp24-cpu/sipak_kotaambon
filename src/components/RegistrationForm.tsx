@@ -373,7 +373,7 @@ export default function RegistrationForm({
     <>
       {/* Personal Information */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-blue-600 font-semibold">
+        <div className="flex items-center gap-2 text-biru-abu font-semibold">
           <User className="w-5 h-5" />
           <span>Informasi Pribadi</span>
         </div>
@@ -498,7 +498,7 @@ export default function RegistrationForm({
       {/* Education History */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-blue-600 font-semibold">
+          <div className="flex items-center gap-2 text-biru-abu font-semibold">
             <GraduationCap className="w-5 h-5" />
             <span>Riwayat Pendidikan</span>
           </div>
@@ -515,7 +515,7 @@ export default function RegistrationForm({
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
-                className="p-4 border rounded-lg bg-slate-50/50 relative group"
+                className="p-4 border rounded-lg bg-abu-muda/50 relative group"
               >
                 {formData.educations!.length > 1 && (
                   <Button
@@ -581,7 +581,7 @@ export default function RegistrationForm({
 
       {/* Professional & Address */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-blue-600 font-semibold">
+        <div className="flex items-center gap-2 text-biru-abu font-semibold">
           <Briefcase className="w-5 h-5" />
           <span>Pekerjaan & Domisili</span>
         </div>
@@ -668,7 +668,7 @@ export default function RegistrationForm({
 
       {/* Interests & Potential */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-blue-600 font-semibold">
+        <div className="flex items-center gap-2 text-biru-abu font-semibold">
           <Sparkles className="w-5 h-5" />
           <span>Minat & Potensi</span>
         </div>
@@ -712,7 +712,7 @@ export default function RegistrationForm({
             )}
           </div>
 
-          <div className="space-y-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+          <div className="space-y-4 p-4 bg-abu-muda rounded-xl border border-abu-muda">
             <div className="space-y-2">
               <Label className="text-base">Kesediaan terlibat dalam pelayanan PAK Kota Ambon? <RequiredAsterisk /></Label>
               <RadioGroup 
@@ -776,7 +776,7 @@ export default function RegistrationForm({
           </div>
 
           {/* KTB Section */}
-          <div className="space-y-4 p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+          <div className="space-y-4 p-4 bg-abu-muda/50 rounded-xl border border-abu-muda">
             <div className="space-y-2">
               <Label className="text-base">Apakah anda sudah ber-KTB (Kelompok Tumbuh Bersama)? <RequiredAsterisk /></Label>
               <RadioGroup 

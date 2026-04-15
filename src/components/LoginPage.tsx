@@ -137,7 +137,7 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
         className="w-full max-w-md"
       >
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-200 mb-4">
+          <div className="w-16 h-16 bg-biru-abu rounded-2xl flex items-center justify-center shadow-xl shadow-abu-muda mb-4">
             <GraduationCap className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">SI GANDONG</h1>
@@ -200,7 +200,7 @@ export default function LoginPage({ onLogin }: { onLogin: () => void }) {
               </div>
               <Button 
                 type="submit" 
-                className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-lg shadow-blue-100"
+                className="w-full h-11 bg-biru-abu hover:bg-biru-abu/90 text-white transition-all shadow-lg shadow-abu-muda"
                 disabled={isLoading}
               >
                 {isLoading ? (

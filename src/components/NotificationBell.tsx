@@ -141,7 +141,7 @@ export default function NotificationBell() {
                       <div className="flex items-start gap-3">
                         <div className={cn(
                           "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                          event.diffDays === 1 ? "bg-blue-100 text-blue-600" : "bg-indigo-100 text-indigo-600"
+                          event.diffDays === 1 ? "bg-abu-muda text-biru-abu" : "bg-indigo-100 text-indigo-600"
                         )}>
                           <Calendar className="w-4 h-4" />
                         </div>
@@ -186,7 +186,7 @@ export default function NotificationBell() {
                             {group.alumni.map((a, i) => (
                               <div key={i} className="flex items-center justify-between bg-white p-2 rounded border border-slate-100 shadow-sm">
                                 <span className="text-xs font-medium text-slate-700 truncate pr-2">{a.name}</span>
-                                <Badge variant="outline" className="text-[9px] h-4 px-1 bg-blue-50 text-blue-600 border-blue-100 shrink-0">
+                                <Badge variant="outline" className="text-[9px] h-4 px-1 bg-abu-muda text-biru-abu border-abu-muda shrink-0">
                                   Ke-{a.age}
                                 </Badge>
                               </div>

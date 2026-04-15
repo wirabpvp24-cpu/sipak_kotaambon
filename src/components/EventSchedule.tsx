@@ -194,8 +194,8 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
     <div className="max-w-5xl mx-auto p-4 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-            <CalendarDays className="w-5 h-5 text-blue-600" />
+          <div className="w-10 h-10 bg-abu-muda rounded-xl flex items-center justify-center">
+            <CalendarDays className="w-5 h-5 text-biru-abu" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Jadwal Kegiatan</h1>
@@ -227,7 +227,7 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
             </select>
           </div>
           {!isAdding && !editingId && isAdmin && (
-            <Button onClick={() => setIsAdding(true)} className="bg-blue-600 hover:bg-blue-700 gap-2 shadow-lg shadow-blue-100">
+            <Button onClick={() => setIsAdding(true)} className="bg-biru-abu hover:bg-biru-abu/90 gap-2 shadow-lg shadow-abu-muda">
               <Plus className="w-4 h-4" /> Tambah Jadwal
             </Button>
           )}
@@ -235,7 +235,7 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
       </div>
 
       {(isAdding || editingId) && (
-        <Card className="border-blue-100 shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
+        <Card className="border-abu-muda shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
           <CardHeader>
             <CardTitle>{editingId ? 'Edit Jadwal' : 'Tambah Jadwal Baru'}</CardTitle>
             <CardDescription>Lengkapi detail kegiatan di bawah ini</CardDescription>
@@ -406,13 +406,13 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
                     id="manualAttendanceEnabled"
                     checked={formData.manualAttendanceEnabled}
                     onChange={(e) => setFormData(prev => ({ ...prev, manualAttendanceEnabled: e.target.checked }))}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-biru-abu bg-gray-100 border-gray-300 rounded focus:ring-biru-abu"
                   />
-                  <Label htmlFor="manualAttendanceEnabled" className="font-bold text-blue-700">Input Kehadiran Manual (Override Grafik Dashboard)</Label>
+                  <Label htmlFor="manualAttendanceEnabled" className="font-bold text-biru-abu">Input Kehadiran Manual (Override Grafik Dashboard)</Label>
                 </div>
                 
                 {formData.manualAttendanceEnabled && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-blue-50 rounded-lg border border-blue-100 animate-in fade-in duration-300">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-abu-muda rounded-lg border border-abu-muda animate-in fade-in duration-300">
                     <div className="space-y-2">
                       <Label htmlFor="manualMaleCount">Jumlah Laki-laki</Label>
                       <Input 
@@ -433,7 +433,7 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
                         min="0"
                       />
                     </div>
-                    <p className="md:col-span-2 text-xs text-blue-600 italic">
+                    <p className="md:col-span-2 text-xs text-biru-abu italic">
                       * Jika diaktifkan, data ini akan digunakan di Dashboard menggantikan data konfirmasi kehadiran otomatis.
                     </p>
                   </div>
@@ -442,7 +442,7 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
 
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="ghost" onClick={() => { setIsAdding(false); setEditingId(null); }} disabled={isSaving}>Batal</Button>
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 gap-2 min-w-[140px]" disabled={isSaving}>
+                <Button type="submit" className="bg-biru-abu hover:bg-biru-abu/90 gap-2 min-w-[140px]" disabled={isSaving}>
                   {isSaving ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
@@ -459,7 +459,7 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
       <div className="space-y-8">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-100">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-4" />
+            <Loader2 className="w-8 h-8 animate-spin text-biru-abu mb-4" />
             <p className="text-slate-500 font-medium">Memuat daftar jadwal...</p>
           </div>
         ) : (
@@ -493,7 +493,7 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
                     return (
                       <Card key={event.id} className={cn(
                         "group transition-all hover:shadow-md border-slate-100",
-                        isToday && "border-blue-200 bg-blue-50/30",
+                        isToday && "border-abu-muda bg-abu-muda/30",
                         isFinished && "opacity-75"
                       )}>
                         <CardContent className="p-5">
@@ -513,17 +513,17 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <h3 className="font-bold text-slate-900 text-lg">{event.title}</h3>
-                                  {isToday && <Badge className="bg-blue-600">Hari Ini</Badge>}
+                                  {isToday && <Badge className="bg-biru-abu">Hari Ini</Badge>}
                                   {isFinished ? (
                                     <Badge variant="outline" className="bg-red-50 text-red-600 border-red-100">Telah Selesai</Badge>
                                   ) : isOngoing ? (
-                                    <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-100">Sedang Berlangsung</Badge>
+                                    <Badge variant="outline" className="bg-abu-muda text-biru-abu border-abu-muda">Sedang Berlangsung</Badge>
                                   ) : (
                                     <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-100">Akan Datang</Badge>
                                   )}
                                 </div>
                                 {event.theme && (
-                                  <p className="text-sm font-semibold text-blue-600">Tema: {event.theme}</p>
+                                  <p className="text-sm font-semibold text-biru-abu">Tema: {event.theme}</p>
                                 )}
                                 {event.speaker && (
                                   <p className="text-sm text-slate-700">Pembicara: {event.speaker}</p>
@@ -555,7 +555,7 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
                                     <>
                                       <Button 
                                         size="sm" 
-                                        className="bg-blue-600 hover:bg-blue-700 gap-2 w-full sm:w-[200px] justify-center"
+                                        className="bg-biru-abu hover:bg-biru-abu/90 gap-2 w-full sm:w-[200px] justify-center"
                                         onClick={() => setSelectedEventForAttendance(event)}
                                         disabled={!isOngoing}
                                       >
@@ -575,7 +575,7 @@ export default function EventSchedule({ isAdmin = false }: { isAdmin?: boolean }
                                     <Button 
                                       variant="outline" 
                                       size="sm" 
-                                      className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-2 w-full sm:w-[200px] justify-center"
+                                      className="border-abu-muda text-biru-abu hover:bg-abu-muda gap-2 w-full sm:w-[200px] justify-center"
                                       onClick={() => setSelectedEventForStats(event)}
                                     >
                                       <BarChart3 className="w-4 h-4" />

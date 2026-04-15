@@ -163,7 +163,7 @@ export default function SuggestionBox({ isOpen, onClose, onSuccess }: Suggestion
             <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
               Batal
             </Button>
-            <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" disabled={loading} className="bg-biru-abu hover:bg-biru-abu/90">
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

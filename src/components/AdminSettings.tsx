@@ -61,7 +61,7 @@ export default function AdminSettings() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-biru-abu" />
       </div>
     );
   }
@@ -69,8 +69,8 @@ export default function AdminSettings() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-          <Lock className="w-5 h-5 text-blue-600" />
+        <div className="w-10 h-10 bg-abu-muda rounded-xl flex items-center justify-center">
+          <Lock className="w-5 h-5 text-biru-abu" />
         </div>
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Pengaturan Admin</h2>
@@ -137,7 +137,7 @@ export default function AdminSettings() {
 
             <Button 
               type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="w-full bg-biru-abu hover:bg-biru-abu/90"
               disabled={isSaving}
             >
               {isSaving ? (

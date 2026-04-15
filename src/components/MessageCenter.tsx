@@ -114,7 +114,7 @@ export default function MessageCenter() {
         <Card className="lg:col-span-1 shadow-md border-slate-100 flex flex-col h-[700px]">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
-              <Filter className="w-5 h-5 text-blue-600" />
+              <Filter className="w-5 h-5 text-biru-abu" />
               Pilih Penerima
             </CardTitle>
             <div className="pt-2">
@@ -155,7 +155,7 @@ export default function MessageCenter() {
                   Pilih Semua ({filteredAlumni.length})
                 </label>
               </div>
-              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-bold text-biru-abu bg-abu-muda px-2 py-0.5 rounded-full">
                 {selectedAlumniIds.length} Terpilih
               </span>
             </div>
@@ -167,7 +167,7 @@ export default function MessageCenter() {
                     filteredAlumni.map(alumni => (
                       <div 
                         key={alumni.id} 
-                        className={`flex items-center gap-3 p-2 rounded-md transition-colors cursor-pointer hover:bg-slate-50 ${selectedAlumniIds.includes(alumni.id!) ? 'bg-blue-50/50' : ''}`}
+                        className={`flex items-center gap-3 p-2 rounded-md transition-colors cursor-pointer hover:bg-slate-50 ${selectedAlumniIds.includes(alumni.id!) ? 'bg-abu-muda/50' : ''}`}
                         onClick={() => toggleSelectAlumni(alumni.id!)}
                       >
                         <Checkbox 
@@ -202,11 +202,11 @@ export default function MessageCenter() {
         <Card className="lg:col-span-2 shadow-md border-slate-100 flex flex-col h-[700px]">
           <CardHeader className="pb-2 shrink-0">
             <CardTitle className="text-lg flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-blue-600" />
+              <MessageSquare className="w-5 h-5 text-biru-abu" />
               Editor Pesan
             </CardTitle>
             <CardDescription>
-              Sesuaikan isi pesan Anda. Gunakan <code className="bg-slate-100 px-1 rounded text-blue-600">[Nama]</code> untuk menyebut nama alumni secara otomatis.
+              Sesuaikan isi pesan Anda. Gunakan <code className="bg-slate-100 px-1 rounded text-biru-abu">[Nama]</code> untuk menyebut nama alumni secara otomatis.
             </CardDescription>
           </CardHeader>
           
@@ -218,14 +218,14 @@ export default function MessageCenter() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="text-xs text-blue-600 h-7"
+                  className="text-xs text-biru-abu h-7"
                   onClick={() => setMessageContent(templates[messageType])}
                 >
                   Reset ke Template
                 </Button>
               </div>
               <Textarea 
-                className="h-[180px] resize-none text-base leading-relaxed focus-visible:ring-blue-500"
+                className="h-[180px] resize-none text-base leading-relaxed focus-visible:ring-biru-abu"
                 value={messageContent}
                 onChange={(e) => setMessageContent(e.target.value)}
                 placeholder="Tulis pesan Anda di sini..."
@@ -253,7 +253,7 @@ export default function MessageCenter() {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-slate-400 mb-1">
-                    Pesan akan dikirimkan secara personal menggunakan tag <code className="text-blue-600 font-bold">[Nama]</code>. 
+                    Pesan akan dikirimkan secara personal menggunakan tag <code className="text-biru-abu font-bold">[Nama]</code>. 
                     {messageType === 'email' ? ' Menggunakan aplikasi email default Anda.' : ' Menggunakan WhatsApp Web/Desktop.'}
                   </p>
                   <p className="text-sm font-semibold text-slate-700">
@@ -263,7 +263,7 @@ export default function MessageCenter() {
                 <Button 
                   className={cn(
                     "w-full sm:w-auto text-white gap-2 h-12 px-8 shadow-lg shrink-0",
-                    messageType === 'email' ? "bg-blue-600 hover:bg-blue-700 shadow-blue-100" : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100"
+                    messageType === 'email' ? "bg-biru-abu hover:bg-biru-abu/90 shadow-abu-muda" : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100"
                   )}
                   disabled={selectedAlumniIds.length === 0}
                   onClick={() => {

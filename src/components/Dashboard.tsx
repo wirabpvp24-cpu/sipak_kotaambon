@@ -17,7 +17,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line
 } from 'recharts';
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6366f1'];
+const COLORS = ['#4A6FA5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#6366f1'];
 
 export default function Dashboard() {
   const [alumniList, setAlumniList] = useState<Alumni[]>([]);
@@ -50,7 +50,7 @@ export default function Dashboard() {
   if (totalAlumni === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
-        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center">
+        <div className="w-20 h-20 bg-abu-muda rounded-full flex items-center justify-center">
           <Users className="w-10 h-10 text-slate-400" />
         </div>
         <div className="text-center">
@@ -432,16 +432,16 @@ export default function Dashboard() {
             <Download className="w-4 h-4" />
             Download Laporan PDF
           </Button>
-          <div className="bg-blue-50 px-4 py-2 rounded-full flex items-center gap-2 border border-blue-100">
-            <Users className="w-5 h-5 text-blue-600" />
-            <span className="font-bold text-blue-700">{totalAlumni} Total Alumni</span>
+          <div className="bg-abu-muda px-4 py-2 rounded-full flex items-center gap-2 border border-abu-muda">
+            <Users className="w-5 h-5 text-biru-abu" />
+            <span className="font-bold text-biru-abu">{totalAlumni} Total Alumni</span>
           </div>
         </div>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-none shadow-lg">
+        <Card className="bg-gradient-to-br from-biru-abu to-biru-abu/90 text-white border-none shadow-lg">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium opacity-80">Alumni Junior</CardTitle>
           </CardHeader>
@@ -591,14 +591,14 @@ export default function Dashboard() {
                         return (
                           <div className="bg-white p-2 border border-slate-100 shadow-lg rounded-md">
                             <p className="text-xs font-bold">{payload[0].payload.name}</p>
-                            <p className="text-xs text-blue-600">{payload[0].value} Alumni</p>
+                            <p className="text-xs text-biru-abu">{payload[0].value} Alumni</p>
                           </div>
                         );
                       }
                       return null;
                     }}
                   />
-                  <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} />
+                  <Bar dataKey="value" fill="#4A6FA5" radius={[0, 4, 4, 0]} barSize={20} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -644,7 +644,7 @@ export default function Dashboard() {
                       return (
                         <div className="bg-white p-3 border border-slate-100 shadow-xl rounded-lg space-y-1">
                           <p className="font-bold text-slate-900">{data.name}</p>
-                          <p className="text-xs text-blue-600 font-medium">Provinsi: {data.province}</p>
+                          <p className="text-xs text-biru-abu font-medium">Provinsi: {data.province}</p>
                           <p className="text-sm text-slate-600">Jumlah: <span className="font-bold">{data.value}</span> ({percentage}%)</p>
                         </div>
                       );
@@ -728,14 +728,14 @@ export default function Dashboard() {
                       return (
                         <div className="bg-white p-2 border border-slate-100 shadow-lg rounded-md">
                           <p className="text-xs font-bold">{payload[0].payload.name}</p>
-                          <p className="text-xs text-blue-600">{payload[0].value} Alumni</p>
+                          <p className="text-xs text-biru-abu">{payload[0].value} Alumni</p>
                         </div>
                       );
                     }
                     return null;
                   }}
                 />
-                <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} />
+                <Bar dataKey="value" fill="#4A6FA5" radius={[0, 4, 4, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -805,7 +805,7 @@ export default function Dashboard() {
                       return (
                         <div className="bg-white p-2 border border-slate-100 shadow-lg rounded-md">
                           <p className="text-xs font-bold">{payload[0].payload.name}</p>
-                          <p className="text-xs text-blue-600">{payload[0].value} Alumni</p>
+                          <p className="text-xs text-biru-abu">{payload[0].value} Alumni</p>
                         </div>
                       );
                     }
@@ -841,7 +841,7 @@ export default function Dashboard() {
                   labelLine={false}
                   label={renderCustomizedLabel}
                 >
-                  <Cell fill="#3b82f6" />
+                  <Cell fill="#4A6FA5" />
                   <Cell fill="#94a3b8" />
                 </Pie>
                 <Tooltip />

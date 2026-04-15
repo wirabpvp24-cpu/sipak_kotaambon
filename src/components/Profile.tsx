@@ -49,7 +49,7 @@ export default function Profile({ isAdmin }: ProfileProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-biru-abu" />
       </div>
     );
   }
@@ -114,7 +114,7 @@ export default function Profile({ isAdmin }: ProfileProps) {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+          <div className="w-12 h-12 bg-biru-abu rounded-2xl flex items-center justify-center shadow-lg shadow-abu-muda">
             <History className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -132,7 +132,7 @@ export default function Profile({ isAdmin }: ProfileProps) {
 
       <div className="max-w-3xl mx-auto">
         <section className="space-y-6">
-          <div className="flex items-center gap-2 text-blue-600">
+          <div className="flex items-center gap-2 text-biru-abu">
             <History className="w-5 h-5" />
             <h3 className="font-bold uppercase tracking-wider text-sm">Tentang Kami</h3>
           </div>

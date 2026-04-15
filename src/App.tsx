@@ -87,9 +87,9 @@ export default function App() {
 
   if (!isAuthReady) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-abu-muda">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-12 h-12 border-4 border-biru-abu border-t-transparent rounded-full animate-spin"></div>
           <p className="text-slate-500 font-medium">Menyiapkan Sistem...</p>
         </div>
       </div>
@@ -117,7 +117,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+    <div className="min-h-screen bg-background font-sans text-slate-900">
       {showWelcome && !isAdmin && (
         <WelcomeModal 
           onSelectRegister={() => {
@@ -154,7 +154,7 @@ export default function App() {
       />
 
       {/* Header Marquee */}
-      <div className="py-3 bg-slate-900 overflow-hidden shrink-0">
+      <div className="py-3 bg-biru-abu overflow-hidden shrink-0">
         <div className="animate-marquee">
           <span className="text-white font-black tracking-[0.2em] text-sm uppercase px-4 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
             Selamat Datang di Persekutuan Alumni Kristen Kota Ambon, Perkantas Maluku
@@ -163,10 +163,10 @@ export default function App() {
       </div>
 
       {/* Navigation Bar */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-abu-muda">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-biru-abu rounded-lg flex items-center justify-center">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
             <span className="font-bold text-xl tracking-tight hidden sm:block">SI GANDONG</span>
@@ -217,9 +217,9 @@ export default function App() {
                 </Button>
                 <Button 
                   variant="ghost" 
-                  size="sm"
+                  size="sm" 
                   onClick={() => setShowSuggestionBox(true)}
-                  className="w-9 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  className="w-9 p-0 text-biru-abu hover:text-biru-cerah hover:bg-abu-muda"
                   title="Kotak Saran"
                 >
                   <Inbox className="w-4 h-4" />

@@ -50,7 +50,7 @@ export default function Home({ isAdmin }: HomeProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-biru-abu" />
       </div>
     );
   }
@@ -119,10 +119,10 @@ export default function Home({ isAdmin }: HomeProps) {
   return (
     <div className="max-w-6xl mx-auto space-y-12">
       {/* Hero Section */}
-      <section className="relative py-20 px-6 overflow-hidden rounded-[2.5rem] bg-slate-900 text-white">
+      <section className="relative py-20 px-6 overflow-hidden rounded-[2.5rem] bg-biru-abu text-white shadow-2xl">
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
-          <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-500 rounded-full blur-[120px]" />
-          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-500 rounded-full blur-[120px]" />
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-biru-cerah rounded-full blur-[120px]" />
+          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-white rounded-full blur-[120px]" />
         </div>
 
         <div className="relative z-10 flex flex-col items-center text-center space-y-8">
@@ -146,7 +146,7 @@ export default function Home({ isAdmin }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-xl md:text-2xl text-blue-100/80 font-medium"
+              className="text-xl md:text-2xl text-abu-muda/80 font-medium"
             >
               {displaySettings.heroSubtitle}
             </motion.p>
@@ -156,7 +156,7 @@ export default function Home({ isAdmin }: HomeProps) {
             <Button 
               variant="secondary" 
               onClick={() => setIsEditing(true)}
-              className="gap-2 bg-white text-slate-900 hover:bg-blue-50"
+              className="gap-2 bg-white text-biru-abu hover:bg-abu-muda"
             >
               <Edit2 className="w-4 h-4" />
               Edit Konten Beranda
@@ -168,7 +168,7 @@ export default function Home({ isAdmin }: HomeProps) {
       {/* Welcome Message */}
       <section className="px-4">
         <div className="max-w-4xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-600 font-bold text-sm uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-abu-muda text-biru-abu font-bold text-sm uppercase tracking-wider">
             <Sparkles className="w-4 h-4" />
             Selamat Datang
           </div>
@@ -187,7 +187,7 @@ export default function Home({ isAdmin }: HomeProps) {
         ].map((item, i) => (
           <Card key={i} className="border-none shadow-sm bg-white hover:shadow-md transition-shadow">
             <CardContent className="p-8 text-center space-y-4">
-              <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto text-blue-600">
+              <div className="w-12 h-12 bg-abu-muda rounded-2xl flex items-center justify-center mx-auto text-biru-abu">
                 <item.icon className="w-6 h-6" />
               </div>
               <h4 className="text-xl font-bold text-slate-900">{item.title}</h4>

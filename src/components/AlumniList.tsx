@@ -378,7 +378,7 @@ export default function AlumniList() {
         <div className="flex gap-2">
           <Button 
             onClick={() => setIsAddingAlumni(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-lg shadow-blue-100"
+            className="bg-biru-abu hover:bg-biru-abu/90 text-white gap-2 shadow-lg shadow-abu-muda"
           >
             <Plus className="w-4 h-4" />
             Tambah Alumni
@@ -408,7 +408,7 @@ export default function AlumniList() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input 
             placeholder="Cari Nama Alumni..." 
-            className="pl-9 h-9 border-none bg-slate-50 focus-visible:ring-1 focus-visible:ring-blue-500"
+            className="pl-9 h-9 border-none bg-slate-50 focus-visible:ring-1 focus-visible:ring-biru-abu"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -418,7 +418,7 @@ export default function AlumniList() {
 
         <div className="flex items-center gap-2">
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="h-9 border-none bg-slate-50 w-[180px] focus:ring-1 focus:ring-blue-500">
+            <SelectTrigger className="h-9 border-none bg-slate-50 w-[180px] focus:ring-1 focus:ring-biru-abu">
               <div className="flex items-center gap-2 text-slate-600">
                 <Filter className="w-4 h-4 text-slate-400" />
                 <span className="text-xs font-bold text-slate-400 uppercase">Kategori:</span>
@@ -434,7 +434,7 @@ export default function AlumniList() {
           </Select>
 
           <Select value={cityFilter} onValueChange={setCityFilter}>
-            <SelectTrigger className="h-9 border-none bg-slate-50 w-[180px] focus:ring-1 focus:ring-blue-500">
+            <SelectTrigger className="h-9 border-none bg-slate-50 w-[180px] focus:ring-1 focus:ring-biru-abu">
               <div className="flex items-center gap-2 text-slate-600">
                 <MapPin className="w-4 h-4 text-slate-400" />
                 <span className="text-xs font-bold text-slate-400 uppercase">Kota:</span>
@@ -450,7 +450,7 @@ export default function AlumniList() {
           </Select>
 
           <Select value={monthFilter} onValueChange={setMonthFilter}>
-            <SelectTrigger className="h-9 border-none bg-slate-50 w-[180px] focus:ring-1 focus:ring-blue-500">
+            <SelectTrigger className="h-9 border-none bg-slate-50 w-[180px] focus:ring-1 focus:ring-biru-abu">
               <div className="flex items-center gap-2 text-slate-600">
                 <Calendar className="w-4 h-4 text-slate-400" />
                 <span className="text-xs font-bold text-slate-400 uppercase">Bulan:</span>
@@ -465,7 +465,7 @@ export default function AlumniList() {
           </Select>
 
           <Select value={sortOrder} onValueChange={(v: SortOrder) => setSortOrder(v)}>
-            <SelectTrigger className="h-9 border-none bg-slate-50 w-[180px] focus:ring-1 focus:ring-blue-500">
+            <SelectTrigger className="h-9 border-none bg-slate-50 w-[180px] focus:ring-1 focus:ring-biru-abu">
               <div className="flex items-center gap-2 text-slate-600">
                 <ArrowUpDown className="w-4 h-4 text-slate-400" />
                 <span className="text-xs font-bold text-slate-400 uppercase">Urut:</span>
@@ -491,7 +491,7 @@ export default function AlumniList() {
             setCategoryFilter('all');
             setCityFilter('all');
           }} 
-          className="text-slate-400 hover:text-blue-600 h-9 px-3"
+          className="text-slate-400 hover:text-biru-abu h-9 px-3"
         >
           Reset
         </Button>
@@ -540,7 +540,7 @@ export default function AlumniList() {
                               "font-medium border-transparent",
                               category === 'Senior' ? "bg-orange-100 text-orange-700" : 
                               category === 'Madya' ? "bg-emerald-100 text-emerald-700" : 
-                              "bg-blue-100 text-blue-700"
+                              "bg-abu-muda text-biru-abu"
                             )}
                           >
                             {category}
@@ -556,7 +556,7 @@ export default function AlumniList() {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col text-sm">
-                            <span className="font-semibold text-blue-600">{lastEdu?.level} ({lastEdu?.graduationYear})</span>
+                            <span className="font-semibold text-biru-abu">{lastEdu?.level} ({lastEdu?.graduationYear})</span>
                             <span className="text-xs text-slate-500 truncate max-w-[150px]">{lastEdu?.institution}</span>
                           </div>
                         </TableCell>
@@ -587,7 +587,7 @@ export default function AlumniList() {
                             <Button 
                               variant="outline" 
                               size="sm" 
-                              className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50" 
+                              className="gap-2 text-biru-abu border-abu-muda hover:bg-abu-muda" 
                               onClick={() => setSelectedAlumni(alumni)}
                             >
                               <Eye className="w-4 h-4" /> Detil
@@ -622,7 +622,7 @@ export default function AlumniList() {
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <DialogTitle className="text-2xl font-bold flex items-center gap-2 text-slate-900">
-                  <Eye className="w-6 h-6 text-blue-600" />
+                  <Eye className="w-6 h-6 text-biru-abu" />
                   Detail Alumni
                 </DialogTitle>
                 <DialogDescription className="text-slate-500">
@@ -633,7 +633,7 @@ export default function AlumniList() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
+                  className="gap-2 text-biru-abu border-abu-muda hover:bg-abu-muda"
                   onClick={() => {
                     const alumniToEdit = selectedAlumni;
                     setSelectedAlumni(null);
@@ -707,9 +707,9 @@ export default function AlumniList() {
               {selectedAlumni && (
                 <div className="space-y-8">
                   {/* Hero Section */}
-                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100">
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-gradient-to-br from-abu-muda to-white p-6 rounded-2xl border border-abu-muda">
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+                      <div className="w-16 h-16 bg-biru-abu rounded-2xl flex items-center justify-center shadow-lg shadow-abu-muda">
                         <User className="w-10 h-10 text-white" />
                       </div>
                       <div className="space-y-1">
@@ -717,7 +717,7 @@ export default function AlumniList() {
                           <h3 className="text-2xl font-bold text-slate-900">{selectedAlumni.fullName}</h3>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          <Badge variant="outline" className="bg-white/50 border-blue-200 text-blue-700">
+                          <Badge variant="outline" className="bg-white/50 border-abu-muda text-biru-abu">
                             {selectedAlumni.gender}
                           </Badge>
                           <Badge 
@@ -727,7 +727,7 @@ export default function AlumniList() {
                               (selectedAlumni.educations && selectedAlumni.educations.length > 0) ? (
                                 getAlumniCategory(Math.min(...selectedAlumni.educations.map(e => e.graduationYear))) === 'Senior' ? "bg-orange-100 text-orange-700" : 
                                 getAlumniCategory(Math.min(...selectedAlumni.educations.map(e => e.graduationYear))) === 'Madya' ? "bg-emerald-100 text-emerald-700" : 
-                                "bg-blue-100 text-blue-700"
+                                "bg-abu-muda text-biru-abu"
                               ) : "bg-slate-100 text-slate-700"
                             )}
                           >
@@ -736,7 +736,7 @@ export default function AlumniList() {
                           {selectedAlumni.password && (
                             <Badge 
                               variant="outline" 
-                              className="bg-blue-50 border-blue-200 text-blue-700 gap-1 cursor-pointer hover:bg-blue-100 transition-colors"
+                              className="bg-abu-muda border-abu-muda text-biru-abu gap-1 cursor-pointer hover:bg-abu-muda transition-colors"
                               onClick={() => setShowPassword(!showPassword)}
                             >
                               <Lock className="w-3 h-3" /> 
