@@ -46,16 +46,17 @@ export default function WelcomeModal({ onSelectRegister, onSelectInfo, onSelectP
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden relative"
+          className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col"
         >
           <button 
             onClick={() => setIsOpen(false)}
-            className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 transition-colors z-10"
+            className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 transition-colors z-20 bg-white/50 backdrop-blur-sm"
           >
             <X className="w-5 h-5 text-slate-400" />
           </button>
 
-          <div className="grid grid-cols-1 md:grid-cols-2">
+          <div className="overflow-y-auto flex-1 custom-scrollbar">
+            <div className="grid grid-cols-1 md:grid-cols-2 min-h-full">
             {/* Left Side: Branding */}
             <div className="bg-blue-600 p-8 text-white flex flex-col justify-center items-center text-center space-y-6">
               <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-inner">
@@ -154,6 +155,7 @@ export default function WelcomeModal({ onSelectRegister, onSelectInfo, onSelectP
                   <ArrowRight className="w-5 h-5 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
                 </button>
               </div>
+            </div>
             </div>
           </div>
         </motion.div>
