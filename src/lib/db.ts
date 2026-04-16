@@ -1,4 +1,4 @@
-import { Alumni, Event, OrgProfile, HomeSettings, EventResponse } from '../types';
+import { Alumni, Event, OrgProfile, HomeSettings, EventResponse, ProfileSection } from '../types';
 import { db, auth } from './firebase';
 import { 
   collection, 
@@ -378,6 +378,75 @@ export const dbService = {
       }
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'settings/profile');
+    });
+  },
+
+  // Profile Section methods
+  async getProfileSections(): Promise<ProfileSection[]> {
+    try {
+      const q = query(collection(db, 'profile_sections'), orderBy('order', 'asc'));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate().toISOString() : data.updatedAt,
+        } as unknown as ProfileSection;
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.LIST, 'profile_sections');
+      return [];
+    }
+  },
+
+  async addProfileSection(section: Omit<ProfileSection, 'id'>): Promise<void> {
+    try {
+      await addDoc(collection(db, 'profile_sections'), {
+        ...section,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'profile_sections');
+    }
+  },
+
+  async updateProfileSection(section: ProfileSection): Promise<void> {
+    if (!section.id) return;
+    try {
+      const sectionRef = doc(db, 'profile_sections', section.id);
+      const { id, ...data } = section;
+      await updateDoc(sectionRef, {
+        ...data,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `profile_sections/${section.id}`);
+    }
+  },
+
+  async deleteProfileSection(id: string): Promise<void> {
+    try {
+      await deleteDoc(doc(db, 'profile_sections', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `profile_sections/${id}`);
+    }
+  },
+
+  subscribeProfileSections(callback: (sections: ProfileSection[]) => void) {
+    const q = query(collection(db, 'profile_sections'), orderBy('order', 'asc'));
+    return onSnapshot(q, (snapshot) => {
+      const sections = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate().toISOString() : data.updatedAt,
+        } as unknown as ProfileSection;
+      });
+      callback(sections);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'profile_sections');
     });
   },
 

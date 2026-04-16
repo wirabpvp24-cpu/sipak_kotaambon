@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, UserPlus, GraduationCap, Users, LogOut, MessageSquare, Lock, Settings, Calendar, History, Inbox } from 'lucide-react';
+import { LayoutDashboard, UserPlus, GraduationCap, Users, LogOut, MessageSquare, Lock, Settings, Calendar, History, Inbox, BookOpen, ChevronDown } from 'lucide-react';
 import RegistrationForm from './components/RegistrationForm';
 import Dashboard from './components/Dashboard';
 import AlumniList from './components/AlumniList';
@@ -24,6 +24,9 @@ import { auth, onAuthStateChanged, signOut, signInAnonymously, db } from './lib/
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { Phone } from 'lucide-react';
 import { Toaster } from 'sonner';
+import { ProfileSection } from './types';
+import { dbService } from './lib/db';
+import { cn } from './lib/utils';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('register');
@@ -34,6 +37,15 @@ export default function App() {
   const [showContact, setShowContact] = useState(false);
   const [showSuggestionBox, setShowSuggestionBox] = useState(false);
   const [unreadSuggestions, setUnreadSuggestions] = useState(0);
+  const [profileSections, setProfileSections] = useState<ProfileSection[]>([]);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = dbService.subscribeProfileSections((data) => {
+      setProfileSections(data);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (isAdmin) {
@@ -174,15 +186,55 @@ export default function App() {
           
           <div className="flex items-center gap-2">
             {/* Public Tabs */}
-            <Button 
-              variant={activeTab === 'profile' ? 'default' : 'ghost'} 
-              size="sm"
-              onClick={() => setActiveTab('profile')}
-              className="gap-2"
-            >
-              <History className="w-4 h-4" />
-              <span className="hidden sm:inline">Profil</span>
-            </Button>
+            <div className="relative group">
+              <Button 
+                variant={activeTab === 'profile' ? 'default' : 'ghost'} 
+                size="sm"
+                onClick={() => setActiveTab('profile')}
+                onMouseEnter={() => setShowProfileDropdown(true)}
+                className="gap-2"
+              >
+                <History className="w-4 h-4" />
+                <span className="hidden sm:inline">Profil</span>
+                <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", showProfileDropdown ? "rotate-180" : "")} />
+              </Button>
+
+              {/* Dropdown Submenu */}
+              <div 
+                className={cn(
+                  "absolute top-full left-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-abu-muda py-2 transition-all duration-200 z-[60]",
+                  showProfileDropdown ? "opacity-100 translate-y-0 visible" : "opacity-0 -translate-y-2 invisible"
+                )}
+                onMouseLeave={() => setShowProfileDropdown(false)}
+              >
+                <button
+                  onClick={() => {
+                    setActiveTab('profile');
+                    setShowProfileDropdown(false);
+                    // We need a way to tell Profile.tsx to show 'about'
+                    window.dispatchEvent(new CustomEvent('change-profile-section', { detail: 'about' }));
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-abu-muda hover:text-biru-abu transition-colors text-left"
+                >
+                  <History className="w-4 h-4" />
+                  Tentang Kami
+                </button>
+                {profileSections.map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => {
+                      setActiveTab('profile');
+                      setShowProfileDropdown(false);
+                      window.dispatchEvent(new CustomEvent('change-profile-section', { detail: section.id }));
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-abu-muda hover:text-biru-abu transition-colors text-left"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    {section.title}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <Button 
               variant={activeTab === 'schedule' ? 'default' : 'ghost'} 

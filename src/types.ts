@@ -89,8 +89,18 @@ export interface Suggestion {
   createdAt: string;
 }
 
+export interface ProfileSection {
+  id?: string;
+  title: string;
+  content: string;
+  imageUrl?: string;
+  order: number;
+  updatedAt: string;
+}
+
 export interface OrgProfile {
   content: string;
+  imageUrl?: string;
   vision?: string;
   mission?: string;
   updatedAt?: string;
