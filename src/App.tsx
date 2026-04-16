@@ -220,7 +220,7 @@ export default function App() {
                   size="sm" 
                   onClick={() => setShowSuggestionBox(true)}
                   className="w-9 p-0 text-biru-abu hover:text-biru-cerah hover:bg-abu-muda"
-                  title="Kotak Saran"
+                  title="Kotak Saran & Pokok Doa"
                 >
                   <Inbox className="w-4 h-4" />
                 </Button>
@@ -263,7 +263,7 @@ export default function App() {
                   size="sm"
                   onClick={() => setActiveTab('suggestions')}
                   className="w-9 p-0 relative"
-                  title="Kotak Saran"
+                  title="Kotak Saran & Pokok Doa"
                 >
                   <Inbox className="w-4 h-4" />
                   {unreadSuggestions > 0 && (

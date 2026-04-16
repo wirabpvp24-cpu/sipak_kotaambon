@@ -74,8 +74,11 @@ export interface EventResponse {
   createdAt: string;
 }
 
+export type SuggestionType = 'Saran' | 'Pokok Doa';
+
 export interface Suggestion {
   id?: string;
+  type: SuggestionType;
   fullName: string;
   email: string;
   phone: string;

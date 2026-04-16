@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { db } from '../lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, MessageSquare, Heart } from 'lucide-react';
 import { INDONESIA_REGIONS } from '../constants/regions';
+import { SuggestionType } from '../types';
 
 interface SuggestionBoxProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ interface SuggestionBoxProps {
 export default function SuggestionBox({ isOpen, onClose, onSuccess }: SuggestionBoxProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
+    type: 'Saran' as SuggestionType,
     fullName: '',
     email: '',
     phone: '',
@@ -47,11 +49,11 @@ export default function SuggestionBox({ isOpen, onClose, onSuccess }: Suggestion
         createdAt: new Date().toISOString()
       });
       
-      toast.success('Terima kasih atas saran dan masukan Anda.');
+      toast.success(formData.type === 'Saran' ? 'Terima kasih atas saran dan masukan Anda.' : 'Terima kasih, pokok doa Anda telah kami terima.');
       onSuccess();
     } catch (error) {
       console.error('Error submitting suggestion:', error);
-      toast.error('Gagal mengirim saran. Silakan coba lagi.');
+      toast.error('Gagal mengirim. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }
@@ -61,13 +63,36 @@ export default function SuggestionBox({ isOpen, onClose, onSuccess }: Suggestion
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Kotak Saran</DialogTitle>
+          <DialogTitle>Kotak Saran & Pokok Doa</DialogTitle>
           <DialogDescription>
-            Berikan saran dan masukan Anda untuk pengembangan pelayanan kami.
+            Berikan saran, masukan, atau bagikan pokok doa Anda bersama kami.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          <div className="space-y-3">
+            <Label>Jenis Pesan</Label>
+            <RadioGroup
+              value={formData.type}
+              onValueChange={(value) => setFormData({ ...formData, type: value as SuggestionType })}
+              className="flex gap-4"
+              required
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Saran" id="type-saran" />
+                <Label htmlFor="type-saran" className="font-normal flex items-center gap-1">
+                  <MessageSquare className="w-3 h-3" /> Saran
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Pokok Doa" id="type-doa" />
+                <Label htmlFor="type-doa" className="font-normal flex items-center gap-1">
+                  <Heart className="w-3 h-3" /> Pokok Doa
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="fullName">Nama Lengkap</Label>
             <Input
@@ -148,10 +173,12 @@ export default function SuggestionBox({ isOpen, onClose, onSuccess }: Suggestion
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="content">Saran dan Masukan</Label>
+            <Label htmlFor="content">
+              {formData.type === 'Saran' ? 'Saran dan Masukan' : 'Isi Pokok Doa'}
+            </Label>
             <Textarea
               id="content"
-              placeholder="Tuliskan saran atau masukan Anda di sini..."
+              placeholder={formData.type === 'Saran' ? "Tuliskan saran atau masukan Anda di sini..." : "Tuliskan pokok doa Anda di sini..."}
               className="min-h-[120px]"
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}

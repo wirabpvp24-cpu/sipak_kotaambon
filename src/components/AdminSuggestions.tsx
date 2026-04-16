@@ -6,12 +6,13 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Badge } from './ui/badge';
-import { MessageSquare, Trash2, Calendar, Mail, User, CheckCircle2, Filter, Search } from 'lucide-react';
+import { MessageSquare, Trash2, Calendar, Mail, User, CheckCircle2, Filter, Search, Heart } from 'lucide-react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Suggestion } from '../types';
 import { Phone, MapPin } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function AdminSuggestions() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -49,14 +50,14 @@ export default function AdminSuggestions() {
   };
 
   const deleteSuggestion = async (suggestionId: string) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus saran ini?')) return;
+    if (!confirm('Apakah Anda yakin ingin menghapus pesan ini?')) return;
     
     try {
       await deleteDoc(doc(db, 'suggestions', suggestionId));
-      toast.success('Saran berhasil dihapus');
+      toast.success('Pesan berhasil dihapus');
     } catch (error) {
       console.error("Error deleting suggestion:", error);
-      toast.error('Gagal menghapus saran');
+      toast.error('Gagal menghapus pesan');
     }
   };
 
@@ -88,15 +89,15 @@ export default function AdminSuggestions() {
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Kotak Saran</h2>
-          <p className="text-slate-500">Kelola saran dan masukan dari pengunjung.</p>
+          <h2 className="text-3xl font-bold tracking-tight">Kotak Saran & Pokok Doa</h2>
+          <p className="text-slate-500">Kelola saran, masukan, dan pokok doa dari pengunjung.</p>
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input 
-              placeholder="Cari saran..." 
+              placeholder="Cari pesan..." 
               className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -127,7 +128,7 @@ export default function AdminSuggestions() {
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12 text-slate-400">
               <MessageSquare className="w-12 h-12 mb-4 opacity-20" />
-              <p>Tidak ada saran yang ditemukan.</p>
+              <p>Tidak ada pesan yang ditemukan.</p>
             </CardContent>
           </Card>
         ) : (
@@ -137,8 +138,13 @@ export default function AdminSuggestions() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
+                      <div className={cn(
+                        "p-1.5 rounded-lg",
+                        suggestion.type === 'Pokok Doa' ? "bg-pink-100 text-pink-600" : "bg-blue-100 text-blue-600"
+                      )}>
+                        {suggestion.type === 'Pokok Doa' ? <Heart className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+                      </div>
                       <CardTitle className="text-lg flex items-center gap-2">
-                        <User className="w-4 h-4 text-slate-400" />
                         {suggestion.fullName}
                       </CardTitle>
                       {!suggestion.isRead && (
