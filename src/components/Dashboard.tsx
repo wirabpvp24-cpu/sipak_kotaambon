@@ -2,6 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { Users, GraduationCap, Award, UserCheck, UserPlus, PieChart as PieChartIcon, BarChart as BarChartIcon, Briefcase, Bell, Cake, MapPin, Sparkles, Heart } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription 
+} from '@/components/ui/dialog';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +33,10 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [majorLevelFilter, setMajorLevelFilter] = useState<string>('S1');
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
+  
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [filteredAlumni, setFilteredAlumni] = useState<Alumni[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -282,6 +293,59 @@ export default function Dashboard() {
     .sort((a, b) => b.value - a.value)
     .slice(0, 10);
 
+  const handleChartClick = (categoryType: string, categoryValue: string) => {
+    let filtered: Alumni[] = [];
+    
+    switch(categoryType) {
+      case 'gender':
+        filtered = alumniList.filter(a => a.gender === categoryValue);
+        break;
+      case 'education':
+        filtered = alumniList.filter(a => {
+          const lastEdu = [...a.educations].sort((a, b) => b.graduationYear - a.graduationYear)[0];
+          return lastEdu?.level === categoryValue;
+        });
+        break;
+      case 'job':
+        filtered = alumniList.filter(a => a.mainJob === categoryValue);
+        break;
+      case 'major':
+        filtered = alumniList.filter(a => a.educations.some(edu => edu.level === majorLevelFilter && edu.major === categoryValue));
+        break;
+      case 'city':
+        filtered = alumniList.filter(a => a.city === categoryValue);
+        break;
+      case 'skill':
+        filtered = alumniList.filter(a => a.skills.includes(categoryValue));
+        break;
+      case 'service':
+        filtered = alumniList.filter(a => a.serviceInterests.includes(categoryValue));
+        break;
+      case 'willing':
+        filtered = alumniList.filter(a => a.isWillingToServe === (categoryValue === 'Bersedia'));
+        break;
+      case 'ktb':
+        filtered = alumniList.filter(a => a.isInKTB === (categoryValue === 'Sudah ber-KTB'));
+        break;
+      case 'ktb-join':
+        filtered = alumniList.filter(a => !a.isInKTB && a.isWillingToJoinKTB === (categoryValue === 'Bersedia Gabung'));
+        break;
+      case 'category':
+        filtered = alumniList.filter(a => {
+          const graduationYears = a.educations.map(e => e.graduationYear).filter(y => y > 0);
+          const firstGrad = graduationYears.length > 0 ? Math.min(...graduationYears) : new Date().getFullYear();
+          return getAlumniCategory(firstGrad) === categoryValue;
+        });
+        break;
+    }
+
+    if (filtered.length > 0) {
+      setFilteredAlumni(filtered);
+      setModalTitle(`Daftar Alumni: ${categoryValue}`);
+      setDetailModalOpen(true);
+    }
+  };
+
   const cityData = (Object.entries(cityStats) as [string, { count: number, province: string }][])
     .map(([name, data]) => ({ name, value: data.count, province: data.province }))
     .sort((a, b) => b.value - a.value)
@@ -441,7 +505,10 @@ export default function Dashboard() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-gradient-to-br from-biru-abu to-biru-abu/90 text-white border-none shadow-lg">
+        <Card 
+          className="bg-gradient-to-br from-biru-abu to-biru-abu/90 text-white border-none shadow-lg cursor-pointer hover:scale-[1.02] transition-transform"
+          onClick={() => handleChartClick('category', 'Junior')}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium opacity-80">Alumni Junior</CardTitle>
           </CardHeader>
@@ -450,7 +517,10 @@ export default function Dashboard() {
             <p className="text-xs opacity-70 mt-1">Lulus &lt; 5 tahun yang lalu</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-none shadow-lg">
+        <Card 
+          className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-none shadow-lg cursor-pointer hover:scale-[1.02] transition-transform"
+          onClick={() => handleChartClick('category', 'Madya')}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium opacity-80">Alumni Madya</CardTitle>
           </CardHeader>
@@ -459,7 +529,10 @@ export default function Dashboard() {
             <p className="text-xs opacity-70 mt-1">Lulus 5 - 15 tahun yang lalu</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-none shadow-lg">
+        <Card 
+          className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-none shadow-lg cursor-pointer hover:scale-[1.02] transition-transform"
+          onClick={() => handleChartClick('category', 'Senior')}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium opacity-80">Alumni Senior</CardTitle>
           </CardHeader>
@@ -494,6 +567,8 @@ export default function Dashboard() {
                   dataKey="value"
                   labelLine={false}
                   label={renderCustomizedLabel}
+                  onClick={(data) => handleChartClick('gender', String(data.name))}
+                  className="cursor-pointer"
                 >
                   {genderData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -528,6 +603,8 @@ export default function Dashboard() {
                   dataKey="value"
                   labelLine={false}
                   label={renderCustomizedLabel}
+                  onClick={(data) => handleChartClick('education', String(data.name))}
+                  className="cursor-pointer"
                 >
                   {educationData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -598,7 +675,14 @@ export default function Dashboard() {
                       return null;
                     }}
                   />
-                  <Bar dataKey="value" fill="#4A6FA5" radius={[0, 4, 4, 0]} barSize={20} />
+                  <Bar 
+                    dataKey="value" 
+                    fill="#4A6FA5" 
+                    radius={[0, 4, 4, 0]} 
+                    barSize={20} 
+                    onClick={(data) => handleChartClick('major', String(data.name))}
+                    className="cursor-pointer"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -631,6 +715,8 @@ export default function Dashboard() {
                   dataKey="value"
                   labelLine={false}
                   label={renderCustomizedLabel}
+                  onClick={(data) => handleChartClick('city', String(data.name))}
+                  className="cursor-pointer"
                 >
                   {cityData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -680,6 +766,8 @@ export default function Dashboard() {
                   dataKey="value"
                   labelLine={false}
                   label={renderCustomizedLabel}
+                  onClick={(data) => handleChartClick('job', String(data.name))}
+                  className="cursor-pointer"
                 >
                   {jobData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -735,7 +823,14 @@ export default function Dashboard() {
                     return null;
                   }}
                 />
-                <Bar dataKey="value" fill="#4A6FA5" radius={[0, 4, 4, 0]} barSize={20} />
+                <Bar 
+                  dataKey="value" 
+                  fill="#4A6FA5" 
+                  radius={[0, 4, 4, 0]} 
+                  barSize={20} 
+                  onClick={(data) => handleChartClick('skill', String(data.name))}
+                  className="cursor-pointer"
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -763,6 +858,8 @@ export default function Dashboard() {
                   dataKey="value"
                   labelLine={false}
                   label={renderCustomizedLabel}
+                  onClick={(data) => handleChartClick('willing', String(data.name))}
+                  className="cursor-pointer"
                 >
                   <Cell fill="#10b981" />
                   <Cell fill="#ef4444" />
@@ -812,7 +909,14 @@ export default function Dashboard() {
                     return null;
                   }}
                 />
-                <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} barSize={20} />
+                <Bar 
+                  dataKey="value" 
+                  fill="#10b981" 
+                  radius={[0, 4, 4, 0]} 
+                  barSize={20} 
+                  onClick={(data) => handleChartClick('service', String(data.name))}
+                  className="cursor-pointer"
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -840,6 +944,8 @@ export default function Dashboard() {
                   dataKey="value"
                   labelLine={false}
                   label={renderCustomizedLabel}
+                  onClick={(data) => handleChartClick('ktb', String(data.name))}
+                  className="cursor-pointer"
                 >
                   <Cell fill="#4A6FA5" />
                   <Cell fill="#94a3b8" />
@@ -873,6 +979,8 @@ export default function Dashboard() {
                   dataKey="value"
                   labelLine={false}
                   label={renderCustomizedLabel}
+                  onClick={(data) => handleChartClick('ktb-join', String(data.name))}
+                  className="cursor-pointer"
                 >
                   <Cell fill="#10b981" />
                   <Cell fill="#ef4444" />
@@ -953,6 +1061,40 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={detailModalOpen} onOpenChange={setDetailModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{modalTitle}</DialogTitle>
+            <DialogDescription>
+              Terdapat {filteredAlumni.length} alumni dalam kategori ini.
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="flex-1 mt-4 pr-4">
+            <div className="space-y-3">
+              {filteredAlumni.map((alumni, index) => (
+                <div 
+                  key={alumni.id || index} 
+                  className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-abu-muda rounded-full flex items-center justify-center text-biru-abu font-bold">
+                      {alumni.fullName.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-900">{alumni.fullName}</p>
+                      <p className="text-xs text-slate-500">{alumni.mainJob} | {alumni.city}</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="bg-white">
+                    {alumni.gender}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
