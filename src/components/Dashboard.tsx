@@ -16,6 +16,7 @@ import { Alumni, getAlumniCategory, EventResponse, Event } from '@/types';
 import { dbService } from '@/lib/db';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -1063,36 +1064,46 @@ export default function Dashboard() {
       </div>
 
       <Dialog open={detailModalOpen} onOpenChange={setDetailModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>{modalTitle}</DialogTitle>
-            <DialogDescription>
-              Terdapat {filteredAlumni.length} alumni dalam kategori ini.
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col sm:rounded-2xl overflow-hidden p-0">
+          <DialogHeader className="p-6 border-b">
+            <DialogTitle className="text-2xl font-bold text-biru-abu">{modalTitle}</DialogTitle>
+            <DialogDescription className="text-slate-500 font-medium">
+              Terdapat {filteredAlumni.length} alumni yang terdaftar dalam kategori ini.
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="flex-1 mt-4 pr-4">
-            <div className="space-y-3">
+          <ScrollArea className="flex-1 min-h-0">
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
               {filteredAlumni.map((alumni, index) => (
                 <div 
                   key={alumni.id || index} 
-                  className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors"
+                  className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 hover:border-biru-abu/30 transition-all shadow-sm"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-abu-muda rounded-full flex items-center justify-center text-biru-abu font-bold">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-abu-muda rounded-full flex items-center justify-center text-biru-abu text-lg font-black shadow-inner">
                       {alumni.fullName.charAt(0)}
                     </div>
                     <div>
-                      <p className="font-bold text-slate-900">{alumni.fullName}</p>
-                      <p className="text-xs text-slate-500">{alumni.mainJob} | {alumni.city}</p>
+                      <p className="font-bold text-slate-900 leading-tight">{alumni.fullName}</p>
+                      <p className="text-xs text-slate-500 mt-1">{alumni.mainJob}</p>
+                      <p className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                        <MapPin className="w-3 h-3" /> {alumni.city}
+                      </p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="bg-white">
-                    {alumni.gender}
-                  </Badge>
+                  <div className="flex flex-col items-end gap-2">
+                    <Badge variant="outline" className={cn(
+                      "text-[10px] py-0 px-2",
+                      alumni.gender === 'Laki-laki' ? "border-blue-200 text-blue-600 font-bold" : "border-pink-200 text-pink-600 font-bold"
+                    )}>
+                      {alumni.gender}
+                    </Badge>
+                  </div>
                 </div>
               ))}
             </div>
-          </ScrollArea>
+          </div>
+        </ScrollArea>
         </DialogContent>
       </Dialog>
     </div>
