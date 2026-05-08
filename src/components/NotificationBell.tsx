@@ -5,7 +5,7 @@ import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
 import { Alumni, Event } from '@/types';
 import { dbService } from '@/lib/db';
-import { cn } from '@/lib/utils';
+import { cn, parseDate } from '@/lib/utils';
 
 export default function NotificationBell() {
   const [alumniList, setAlumniList] = useState<Alumni[]>([]);
@@ -41,7 +41,7 @@ export default function NotificationBell() {
     today.setHours(0, 0, 0, 0);
     
     const reminders = alumniList.filter(alumni => {
-      const birthDate = new Date(alumni.birthDate);
+      const birthDate = parseDate(alumni.birthDate);
       const bDayThisYear = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
       
       const diffTime = bDayThisYear.getTime() - today.getTime();
@@ -54,7 +54,7 @@ export default function NotificationBell() {
     const groups: Record<string, { diffDays: number, date: Date, alumni: { name: string, age: number }[] }> = {};
     
     reminders.forEach(alumni => {
-      const birthDate = new Date(alumni.birthDate);
+      const birthDate = parseDate(alumni.birthDate);
       const bDayThisYear = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
       const key = `${bDayThisYear.getMonth()}-${bDayThisYear.getDate()}`;
       

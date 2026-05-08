@@ -10,7 +10,7 @@ import { Alumni } from '@/types';
 import { dbService } from '@/lib/db';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { cn } from '@/lib/utils';
+import { cn, parseDate } from '@/lib/utils';
 
 export default function MessageCenter() {
   const [alumniList, setAlumniList] = useState<Alumni[]>([]);
@@ -55,13 +55,13 @@ export default function MessageCenter() {
 
   const isBirthdayToday = (birthDateStr: string) => {
     const today = new Date();
-    const birthDate = new Date(birthDateStr);
+    const birthDate = parseDate(birthDateStr);
     return today.getDate() === birthDate.getDate() && today.getMonth() === birthDate.getMonth();
   };
 
   const isBirthdayThisMonth = (birthDateStr: string) => {
     const today = new Date();
-    const birthDate = new Date(birthDateStr);
+    const birthDate = parseDate(birthDateStr);
     return today.getMonth() === birthDate.getMonth();
   };
 

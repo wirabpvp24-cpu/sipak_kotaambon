@@ -23,7 +23,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+import { cn, parseDate } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alumni, getAlumniCategory, AlumniCategory } from '@/types';
 import { dbService } from '@/lib/db';
@@ -62,62 +62,19 @@ function DetailItem({ label, value, icon }: { label: string, value: string, icon
 
 type SortOrder = 'newest' | 'oldest' | 'birth-youngest' | 'birth-oldest' | 'name-asc' | 'name-desc';
 
-// Helper to parse date strings that might be in DD/MM/YYYY or YYYY-MM-DD format
-function parseDate(dateStr: string): Date {
-  if (!dateStr) return new Date(0);
-  
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
-    const [d, m, y] = dateStr.split('/');
-    return new Date(`${y}-${m}-${d}`);
-  }
-  
-  const date = new Date(dateStr);
-  return isNaN(date.getTime()) ? new Date(0) : date;
-}
-
 // Helper to format date strings that might be in DD/MM/YYYY or YYYY-MM-DD format
 function formatDisplayDate(dateStr: string) {
   if (!dateStr) return '-';
-  
-  // If it's already DD/MM/YYYY, just return it
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
-    return dateStr;
-  }
-  
-  // If it's YYYY-MM-DD, convert to DD/MM/YYYY
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-    const [y, m, d] = dateStr.split('-');
-    return `${d}/${m}/${y}`;
-  }
-  
-  // Fallback to native Date if possible
-  try {
-    const date = new Date(dateStr);
-    if (!isNaN(date.getTime())) {
-      return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    }
-  } catch (e) {
-    // ignore
-  }
-  
-  return dateStr;
+  const date = parseDate(dateStr);
+  if (date.getTime() === 0) return dateStr;
+  return date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 // Helper for long date format (e.g. 31 Desember 1990)
 function formatLongDate(dateStr: string) {
   if (!dateStr) return '-';
-  
-  let date: Date;
-  
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
-    const [d, m, y] = dateStr.split('/');
-    date = new Date(`${y}-${m}-${d}`);
-  } else {
-    date = new Date(dateStr);
-  }
-  
-  if (isNaN(date.getTime())) return dateStr;
-  
+  const date = parseDate(dateStr);
+  if (date.getTime() === 0) return dateStr;
   return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
